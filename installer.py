@@ -39,7 +39,7 @@ def _get_base_dir() -> Path:
 def _get_real_config_dir() -> str:
     return platformdirs.user_config_dir(APP_NAME)
 
-DEV_MODE = True
+DEV_MODE = False
 
 def get_uvx_args(uvx_path: str, base_dir: Path, real_config_dir: str) -> list[str]:
     if DEV_MODE:
