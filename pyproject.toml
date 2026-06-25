@@ -1,0 +1,25 @@
+[project]
+name = "llm-council-mcp"
+version = "0.1.0"
+description = "Local MCP server for the LLM Council workflow"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [{ name = "Alexander Deja" }]
+urls = { Homepage = "https://www.anderzlabs.de/", "Original idea" = "https://github.com/karpathy/llm-council" }
+dependencies = [
+    "mcp>=1.2.0",
+    "httpx>=0.27.0",
+    "flask>=3.0.0",
+    "pydantic>=2.0.0",
+    "platformdirs>=4.0.0",
+    "tomli>=2.0.0; python_version < '3.11'",
+    "tomli_w>=1.0.0",
+]
+
+[project.scripts]
+llm-council-mcp = "server:main"
+llm-council-setup = "setup_ui:main"
+
+[tool.setuptools]
+py-modules = ["server", "installer", "setup_ui", "council_core", "council_settings"]

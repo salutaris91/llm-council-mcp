@@ -1,0 +1,10 @@
+{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2024-11-05","capabilities":{"experimental":{},"prompts":{"listChanged":false},"resources":{"subscribe":false,"listChanged":false},"tools":{"listChanged":false}},"serverInfo":{"name":"llm_council_mcp","version":"1.28.0"}}}
+{"method":"notifications/message","params":{"level":"info","data":"Stage 1: Collecting responses from 1 models..."},"jsonrpc":"2.0"}
+{"method":"notifications/progress","params":{"progressToken":"123","progress":10.0,"total":100.0},"jsonrpc":"2.0"}
+{"method":"notifications/message","params":{"level":"info","data":"Stage 2: Peer ranking of responses..."},"jsonrpc":"2.0"}
+{"method":"notifications/progress","params":{"progressToken":"123","progress":50.0,"total":100.0},"jsonrpc":"2.0"}
+{"method":"notifications/message","params":{"level":"info","data":"Stage 3: Synthesis by chairman google/gemini-3-pro-preview..."},"jsonrpc":"2.0"}
+{"method":"notifications/progress","params":{"progressToken":"123","progress":80.0,"total":100.0},"jsonrpc":"2.0"}
+{"method":"notifications/message","params":{"level":"info","data":"Council process complete."},"jsonrpc":"2.0"}
+{"method":"notifications/progress","params":{"progressToken":"123","progress":100.0,"total":100.0},"jsonrpc":"2.0"}
+{"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text","text":"Error: Error: no usable Stage 1 responses to synthesize from (every council model failed)."}],"structuredContent":{"result":"Error: Error: no usable Stage 1 responses to synthesize from (every council model failed)."},"isError":false}}
