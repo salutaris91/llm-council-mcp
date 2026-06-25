@@ -31,7 +31,7 @@ The server has **no direct file access**. This is intentional: the calling tool 
 ## Installation & Setup
 
 ### Method A: Quick Onboarding via PyPI (Recommended)
-You can run the Setup UI directly from PyPI without cloning the repository:
+You can run the Setup UI directly from PyPI without cloning the repository (requires the package installer [uv](https://github.com/astral-sh/uv) to be installed):
 ```bash
 uvx --from llm-council-mcp-server llm-council-setup
 ```
@@ -157,7 +157,7 @@ Der Server hat **keinen eigenen Dateizugriff**. Das ist Absicht: Das aufrufende 
 ## Installation & Setup
 
 ### Methode A: Schnellstart via PyPI (Empfohlen)
-Du kannst die Setup-Oberfläche direkt über PyPI ausführen, ohne das Repository klonen zu müssen:
+Du kannst die Setup-Oberfläche direkt über PyPI ausführen, ohne das Repository klonen zu müssen (erfordert ein installiertes [uv](https://github.com/astral-sh/uv)):
 ```bash
 uvx --from llm-council-mcp-server llm-council-setup
 ```
