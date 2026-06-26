@@ -15,6 +15,7 @@ import tempfile
 from pathlib import Path
 from typing import Optional, Tuple
 import platformdirs
+from _version import __version__
 
 import sys
 
@@ -52,7 +53,7 @@ DEV_MODE = False
 def get_uvx_args(uvx_path: str, base_dir: Path, real_config_dir: str) -> list[str]:
     if DEV_MODE:
         return [uvx_path, "-q", "--from", str(base_dir), "llm-council-mcp", f"--config-dir={real_config_dir}"]
-    return [uvx_path, "-q", "--from", "llm-council-mcp-server@0.1.3", "llm-council-mcp", f"--config-dir={real_config_dir}"]
+    return [uvx_path, "-q", "--from", f"llm-council-mcp-server@{__version__}", "llm-council-mcp", f"--config-dir={real_config_dir}"]
 
 
 # ---------------------------------------------------------------------------

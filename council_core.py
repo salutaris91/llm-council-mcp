@@ -195,9 +195,34 @@ async def _query_models_parallel(
     temperature: float,
     api_key: str,
     max_tokens: int,
+    progress_callback: Optional[Callable[[float, float, str], Awaitable[None]]] = None,
+    progress_range: Optional[Tuple[float, float]] = None,
+    stage_name: str = "Stage 1",
 ) -> Dict[str, Dict[str, Any]]:
     async with httpx.AsyncClient() as client:
-        coros = [_query_model(client, model, messages, temperature, api_key, max_tokens) for model in models]
+        if not models:
+            return {}
+            
+        completed_count = 0
+        total_count = len(models)
+        lock = asyncio.Lock()
+        
+        async def wrapped_query(model):
+            nonlocal completed_count
+            res = await _query_model(client, model, messages, temperature, api_key, max_tokens)
+            async with lock:
+                completed_count += 1
+                if progress_callback and progress_range:
+                    start, end = progress_range
+                    prog = start + (end - start) * (completed_count / total_count)
+                    msg = f"{stage_name}: {completed_count}/{total_count} Modelle geantwortet"
+                    try:
+                        await progress_callback(prog, 100, msg)
+                    except Exception as e:
+                        logger.warning("Error in progress callback: %s", e)
+            return res
+
+        coros = [wrapped_query(model) for model in models]
         results = await asyncio.gather(*coros)
         return dict(zip(models, results))
 
@@ -225,6 +250,7 @@ async def stage1_collect_responses(
     api_key: str,
     max_tokens: int,
     t1: float,
+    progress_callback: Optional[Callable[[float, float, str], Awaitable[None]]] = None,
 ) -> List[Dict[str, Any]]:
     full_query = user_query
     if code_context and code_context.strip():
@@ -238,7 +264,16 @@ async def stage1_collect_responses(
     prompt = STAGE1_PROMPT_TEMPLATE.format(full_query=full_query)
     messages = [{"role": "user", "content": prompt}]
 
-    responses = await _query_models_parallel(models, messages, t1, api_key, max_tokens)
+    responses = await _query_models_parallel(
+        models,
+        messages,
+        t1,
+        api_key,
+        max_tokens,
+        progress_callback=progress_callback,
+        progress_range=(10.0, 50.0),
+        stage_name="Stage 1",
+    )
 
     results: List[Dict[str, Any]] = []
     for model in models:
@@ -264,6 +299,7 @@ async def stage2_collect_rankings(
     api_key: str,
     max_tokens: int,
     t2: float,
+    progress_callback: Optional[Callable[[float, float, str], Awaitable[None]]] = None,
 ) -> Tuple[List[Dict[str, Any]], Dict[str, str]]:
     valid = [r for r in stage1_results if r.get("response") and r["response"].strip()]
     if not valid:
@@ -285,7 +321,16 @@ async def stage2_collect_rankings(
     # the rate-limit optimization in the original: no point asking a
     # model that just failed to also do the ranking work).
     models_to_ask = [r["model"] for r in valid]
-    responses = await _query_models_parallel(models_to_ask, messages, t2, api_key, max_tokens)
+    responses = await _query_models_parallel(
+        models_to_ask,
+        messages,
+        t2,
+        api_key,
+        max_tokens,
+        progress_callback=progress_callback,
+        progress_range=(50.0, 80.0),
+        stage_name="Stage 2",
+    )
 
     results: List[Dict[str, Any]] = []
     for model in models_to_ask:
@@ -433,10 +478,10 @@ async def run_full_council(
     chairman_model = raw_chairman.strip() if raw_chairman and raw_chairman.strip() else council_settings.DEFAULT_CHAIRMAN_MODEL
 
     await _report(10, 100, f"Stage 1: Collecting responses from {len(council_models)} models...")
-    stage1 = await stage1_collect_responses(user_query, code_context, council_models, api_key, max_tokens, t1)
+    stage1 = await stage1_collect_responses(user_query, code_context, council_models, api_key, max_tokens, t1, progress_callback)
     
     await _report(50, 100, "Stage 2: Peer ranking of responses...")
-    stage2, label_to_model = await stage2_collect_rankings(user_query, stage1, api_key, max_tokens, t2)
+    stage2, label_to_model = await stage2_collect_rankings(user_query, stage1, api_key, max_tokens, t2, progress_callback)
     
     await _report(80, 100, f"Stage 3: Synthesis by chairman {chairman_model}...")
     stage3 = await stage3_synthesize_final(user_query, stage1, stage2, chairman_model, api_key, max_tokens, t3)

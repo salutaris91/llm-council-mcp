@@ -108,7 +108,7 @@ To use the council, simply ask your MCP host to query it, passing any code conte
 * *"Ask the council to review my implementation of this sorting algorithm."*
 
 **What happens under the hood:**
-The server will run the 3-stage consensus pipeline. Because this involves multiple parallel and sequential LLM calls, the tool response typically takes **30 to 120 seconds** to complete. It will return a formatted Markdown report consisting of the Chairman's synthesis, followed by the individual models' responses and rankings.
+The server will run the 3-stage consensus pipeline. Because this involves multiple parallel and sequential LLM calls, the tool response typically takes **30 to 120 seconds** to complete. Some hosts (Antigravity) show live progress, others (Codex) only a spinner — the call continues normally and typically takes 30–120 s depending on the models (occasionally a bit longer). Simply wait until the result appears. It will return a formatted Markdown report consisting of the Chairman's synthesis, followed by the individual models' responses and rankings.
 
 ---
 
@@ -181,6 +181,24 @@ args = ["/path/to/llm-council-mcp/server.py"]
   - Open the Setup UI and double-check your API key. Make sure your OpenRouter account has positive credit.
 * **Check the Logs:**
   - Standard error logs are captured by your MCP host. Check your tool's log output or terminal window for details.
+
+---
+
+## Releasing (Maintainer)
+
+This repository is set up with **Trusted Publishing** to PyPI via GitHub Actions. Releases are triggered tokenless using OIDC.
+
+To release a new version:
+1. Update the version string in `_version.py` (e.g. `0.1.4`).
+2. Commit and push the changes to `main`.
+3. Create and push a version tag matching `v*.*.*`:
+   ```bash
+   git tag -a v0.1.4 -m "v0.1.4"
+   git push origin v0.1.4
+   ```
+4. GitHub Actions will automatically build the package and publish it to PyPI.
+5. Create a GitHub Release referencing the new tag.
+6. Run the Setup UI or installer to update your local configuration file to point to the new version pin.
 
 ---
 
@@ -295,7 +313,7 @@ Um den Council zu nutzen, bitte einfach deinen MCP-Client darum, das Tool `ask_c
 * *"Frag den Council nach einem Review für meine Implementierung dieses Sortieralgorithmus."*
 
 **Was im Hintergrund passiert:**
-Der Server führt die 3 Stufen des Council-Prozesses durch. Da dies mehrere parallele und sequenzielle LLM-Aufrufe erfordert, dauert die Antwort in der Regel **30 bis 120 Sekunden**. Du erhältst einen formatierten Markdown-Report mit der Synthese des Chairmans, gefolgt von den Antworten der Einzelmodelle sowie deren Rankings.
+Der Server führt die 3 Stufen des Council-Prozesses durch. Da dies mehrere parallele und sequenzielle LLM-Aufrufe erfordert, dauert die Antwort in der Regel **30 bis 120 Sekunden**. Manche Hosts (Antigravity) zeigen Live-Fortschritt, andere (Codex) nur einen Spinner — der Call läuft dabei ganz normal weiter und dauert je nach Modellen typischerweise 30–120 s (gelegentlich etwas länger). Einfach warten, bis das Ergebnis erscheint. Du erhältst einen formatierten Markdown-Report mit der Synthese des Chairmans, gefolgt von den Antworten der Einzelmodelle sowie deren Rankings.
 
 ---
 
@@ -368,6 +386,24 @@ args = ["/pfad/zu/llm-council-mcp/server.py"]
   - Öffne die Setup-UI und kontrolliere deinen API-Key. Vergewissere dich, dass dein OpenRouter-Konto über ausreichend Guthaben verfügt.
 * **Logs einsehen:**
   - Fehlermeldungen werden von deinem MCP-Client erfasst. Siehe in den Logs des Editors oder im Terminalfenster nach Details.
+
+---
+
+## Releasing (Maintainer)
+
+Dieses Repository verwendet **Trusted Publishing** über GitHub Actions, um Releases vollautomatisch auf PyPI zu veröffentlichen. Das Publishing erfolgt tokenlos mittels OIDC.
+
+Ablauf für ein neues Release:
+1. Versionsnummer in `_version.py` anpassen (z. B. `0.1.4`).
+2. Änderungen committen und auf `main` pushen.
+3. Versions-Tag erstellen und pushen (muss auf `v*.*.*` passen):
+   ```bash
+   git tag -a v0.1.4 -m "v0.1.4"
+   git push origin v0.1.4
+   ```
+4. GitHub Actions baut und veröffentlicht das Paket automatisch auf PyPI.
+5. Ein GitHub-Release für den neuen Tag erstellen.
+6. Die Setup-UI oder den Installer ausführen, um die lokale Konfigurationsdatei auf den neuen Versions-Pin zu aktualisieren.
 
 ---
 

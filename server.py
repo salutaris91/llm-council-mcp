@@ -25,12 +25,13 @@ from pydantic import BaseModel, ConfigDict, Field
 
 import council_core
 import council_settings
+from _version import __version__
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("llm_council_mcp")
 
 mcp = FastMCP("llm_council_mcp")
-mcp._mcp_server.version = "0.1.3"
+mcp._mcp_server.version = __version__
 
 
 class AskCouncilInput(BaseModel):

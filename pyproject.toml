@@ -1,6 +1,6 @@
 [project]
 name = "llm-council-mcp-server"
-version = "0.1.3"
+dynamic = ["version"]
 description = "Local MCP server for the LLM Council workflow"
 readme = "README.md"
 license = { text = "MIT" }
@@ -22,4 +22,7 @@ llm-council-mcp = "server:main"
 llm-council-setup = "setup_ui:main"
 
 [tool.setuptools]
-py-modules = ["server", "installer", "setup_ui", "council_core", "council_settings"]
+py-modules = ["server", "installer", "setup_ui", "council_core", "council_settings", "_version"]
+
+[tool.setuptools.dynamic]
+version = { attr = "_version.__version__" }

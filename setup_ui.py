@@ -22,13 +22,42 @@ import secrets
 import sys
 import threading
 import webbrowser
+import time
 from pathlib import Path
+from typing import Optional
+import httpx
 
 from flask import Flask, redirect, render_template_string, request, url_for, flash, session
 
 import council_core
 import installer
 import council_settings
+from _version import __version__ as current_version
+
+_pypi_cache = {
+    "version": None,
+    "expires_at": 0.0
+}
+
+def get_latest_pypi_version() -> Optional[str]:
+    global _pypi_cache
+    now = time.time()
+    if _pypi_cache["version"] is not None and now < _pypi_cache["expires_at"]:
+        return _pypi_cache["version"]
+        
+    try:
+        resp = httpx.get("https://pypi.org/pypi/llm-council-mcp-server/json", timeout=2.0)
+        if resp.status_code == 200:
+            data = resp.json()
+            version = data.get("info", {}).get("version")
+            if version:
+                _pypi_cache["version"] = version
+                _pypi_cache["expires_at"] = now + 3600.0  # cache 1 hour
+                return version
+    except Exception as e:
+        print(f"Error checking PyPI version: {e}", file=sys.stderr)
+        
+    return None
 
 HOST = "127.0.0.1"
 PORT = 5151
@@ -87,7 +116,9 @@ TRANSLATIONS = {
         "installer_uninstall_success_file": "Entfernt aus {detail} (atomar)",
         "installer_no_config_to_remove": "Keine Config unter {detail} - nichts zu entfernen.",
         "installer_not_registered": "War nicht eingetragen in {detail}",
-        "installer_uninstall_error": "Fehler beim Entfernen: {detail}"
+        "installer_uninstall_error": "Fehler beim Entfernen: {detail}",
+        "update_title": "Update verfügbar!",
+        "update_body": "Eine neuere Version ({latest}) ist auf PyPI verfügbar (installiert: {installed}). Zum Aktualisieren bitte den folgenden Befehl im Terminal ausführen, danach die Seite neu laden und erneut auf 'Installieren' klicken:"
     },
     "en": {
         "title": "LLM Council - Setup",
@@ -142,7 +173,9 @@ TRANSLATIONS = {
         "installer_uninstall_success_file": "Removed from {detail} (atomically)",
         "installer_no_config_to_remove": "No config at {detail} - nothing to remove.",
         "installer_not_registered": "Was not registered in {detail}",
-        "installer_uninstall_error": "Error during removal: {detail}"
+        "installer_uninstall_error": "Error during removal: {detail}",
+        "update_title": "Update Available!",
+        "update_body": "A newer version ({latest}) is available on PyPI (installed: {installed}). To update, please run the following command in your terminal, then reload this page and click 'Install' again:"
     }
 }
 
@@ -217,6 +250,16 @@ PAGE_TEMPLATE = """
   <a href="{{ url_for('change_lang', lang='de') }}" style="text-decoration: {{ 'underline' if lang == 'de' else 'none' }}; color: #333; font-weight: {{ 'bold' if lang == 'de' else 'normal' }};">Deutsch</a> |
   <a href="{{ url_for('change_lang', lang='en') }}" style="text-decoration: {{ 'underline' if lang == 'en' else 'none' }}; color: #333; font-weight: {{ 'bold' if lang == 'en' else 'normal' }};">English</a>
 </div>
+
+{% if update_available %}
+  <div class="flash" style="background: #fff9e6; border: 1px solid #ffe0b2; padding: 12px 16px; margin-bottom: 20px; border-radius: 4px; color: #b78103;">
+    <strong style="font-size: 1.1em;">💡 {{ t.update_title }}</strong>
+    <p style="margin: 6px 0 10px 0; font-size: 0.9em;">
+      {{ t.update_body.format(installed=current_version, latest=latest_version) }}
+    </p>
+    <code style="display: block; background: #fffde6; border: 1px solid #ffd54f; padding: 8px 12px; font-family: monospace; font-size: 0.9em; border-radius: 4px; color: #5d4037; overflow-x: auto; white-space: pre-wrap; word-break: break-all;">uvx --refresh --from llm-council-mcp-server llm-council-setup</code>
+  </div>
+{% endif %}
 
 <h1>{{ t.header }}</h1>
 <p class="hint">{{ t.hint_local }}</p>
@@ -485,6 +528,16 @@ def index():
         lang = request.accept_languages.best_match(["de", "en"]) or "de"
     t = TRANSLATIONS[lang]
     
+    latest_version = get_latest_pypi_version()
+    update_available = False
+    if latest_version:
+        def parse_version(v):
+            return tuple(int(x) for x in v.split(".") if x.isdigit())
+        try:
+            update_available = parse_version(latest_version) > parse_version(current_version)
+        except Exception:
+            pass
+    
     api_key = settings.get("openrouter_api_key", "")
     recommended_models = []
     other_models = []
@@ -525,6 +578,9 @@ def index():
         other_models=other_models,
         t=t,
         lang=lang,
+        update_available=update_available,
+        current_version=current_version,
+        latest_version=latest_version or "",
     )
 
 
