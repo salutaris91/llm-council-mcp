@@ -1,9 +1,15 @@
 # Roadmap
 
-## Next (0.1.1)
-- README: Quick-Start-Walkthrough, OpenRouter-Key-Quelle, Antigravity-Pfad `~/.gemini/config/mcp_config.json`, Usage-Beispiel, requirements.txt-Fix, Troubleshooting.
-- serverInfo.version meldet App-Version (0.1.0) statt MCP-Library-Version.
+## Next (0.1.3)
 - GitHub-Repo: an Paketnamen anpassen (`llm-council-mcp-server`) und Sichtbarkeit entscheiden.
+
+## Released in 0.1.2
+- Bugfix: requirements.txt bereinigt (python-dotenv entfernt, platformdirs>=4.0.0 hinzugefügt) für Method B.
+
+## Released in 0.1.1
+- README: Quick-Start-Walkthrough, OpenRouter-Key-Quelle, Antigravity-Pfad `~/.gemini/config/mcp_config.json`, Usage-Beispiel, Troubleshooting, zweisprachig (DE/EN) und Vereinfachungen.
+- serverInfo.version meldet App-Version (0.1.1) statt MCP-Library-Version.
+- DEV_MODE = False standardmäßig im Release-Paket gesetzt.
 
 ## Soon
 - `keyring`-Backend (API-Key im OS-Schlüsselspeicher statt Klartext-settings.json) als optionale Wahl.

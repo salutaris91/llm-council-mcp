@@ -87,7 +87,14 @@ Follow these steps to get up and running:
 
 ## Setup UI & Settings Storage
 
-The Setup UI saves your API key, model selections, and custom temperatures to a `settings.json` file in your user config directory (e.g. `~/Library/Application Support/llm-council` on macOS).
+The Setup UI provides a user-friendly interface to manage your council settings. It features:
+- **Language Switcher:** Toggle the UI dynamically between German and English.
+- **Model Presets (Quick & Deep):** Instantly switch between fast models (for quick checks) and highly capable reasoning models (for deep architectural decisions).
+- **Advanced / Expert Settings:** Adjust the AI's "creativity" (temperatures) for each of the three stages and configure custom token limits.
+- **Auto-Open Browser Toggle:** Choose whether the Setup UI should automatically open your browser on startup.
+- **Tool Installer:** View the status (Installed/Not Installed) and register/unregister the MCP server in Claude Code, Codex CLI, and Antigravity with a single click.
+
+Your configuration is saved to a `settings.json` file in your user config directory (e.g., `~/Library/Application Support/llm-council` on macOS).
 *Legacy Note:* If you have an existing `.env` file from manual setups, it will be automatically imported into `settings.json` on the first start, and can be safely removed afterwards.
 
 ---
@@ -267,7 +274,14 @@ Befolge diese Schritte, um direkt loszulegen:
 
 ## Setup-UI & Speicherort der Einstellungen
 
-Die Setup-UI speichert deinen API-Key, die Modell-Auswahl und angepasste Temperaturen in einer Datei namens `settings.json` im Konfigurationsverzeichnis (z. B. `~/Library/Application Support/llm-council` unter macOS).
+Die Setup-UI bietet eine benutzerfreundliche Oberfläche zur Verwaltung deiner Council-Einstellungen. Zu den Features gehören:
+- **Sprachumschalter:** Wechselt die UI dynamisch zwischen Deutsch und Englisch.
+- **Modell-Presets (Schnell & Deep):** Ermöglicht das sofortige Umschalten zwischen schnellen Modellen (für schnelle Checks) und hochentwickelten Reasoning-Modellen (für tiefgehende Architekturfragen).
+- **Profi-Modus / Erweiterte Einstellungen:** Passe die „Kreativität“ der KI (Temperaturen) für jede der drei Stufen individuell an und definiere maximale Token-Limits.
+- **Browser Auto-Open Toggle:** Wähle aus, ob die Setup-UI beim Start automatisch den Browser öffnen soll.
+- **Tool-Installer:** Zeigt den aktuellen Installationsstatus an und ermöglicht die Registrierung/Entfernung des MCP-Servers in Claude Code, Codex CLI und Antigravity mit einem Klick.
+
+Deine Konfiguration wird in einer `settings.json`-Datei im Konfigurationsverzeichnis (z. B. `~/Library/Application Support/llm-council` unter macOS) gespeichert.
 *Migration:* Falls noch eine alte `.env`-Datei aus manuellen Setups vorhanden ist, wird diese beim ersten Start automatisch in die `settings.json` importiert und kann danach gelöscht werden.
 
 ---
