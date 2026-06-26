@@ -90,9 +90,10 @@ def resolve_ui_target(host: str = HOST, base_port: int = PORT):
       - taken by other proc  -> (fallback,  True,  False)  start on 5152-5160
       - no port available    -> (None,      False, False)
 
-    Callers decide whether to open a browser: the standalone UI opens on reuse
-    (the user explicitly asked for it), the server-embedded starter does not
-    (so host restarts don't spam new tabs).
+    This is used by the *server-embedded* starter, which reuses an already
+    running UI (and does not reopen a tab) so host restarts don't spam tabs.
+    The standalone launcher does NOT use this — see main(): it always runs its
+    own freshly-invoked version rather than deferring to a possibly stale one.
     """
     if not _is_port_in_use(host, base_port):
         return base_port, True, False
@@ -754,7 +755,20 @@ def _open_browser_later(port: int = PORT):
 
 
 def main():
-    target_port, should_start, is_reuse = resolve_ui_target(HOST, PORT)
+    # The user explicitly invoked this (possibly freshly --refresh'd) version,
+    # so always run our OWN UI. Never defer to a UI that may already be running
+    # on 5151 from an older embedded server — otherwise `uvx --refresh ...
+    # llm-council-setup` would silently bounce the user to stale code (and they
+    # would never reach the new Install/restart behaviour). Take 5151 if free,
+    # else fall back to 5152-5160.
+    target_port = None
+    if not _is_port_in_use(HOST, PORT):
+        target_port = PORT
+    else:
+        for fallback_port in range(PORT + 1, PORT + 10):
+            if not _is_port_in_use(HOST, fallback_port):
+                target_port = fallback_port
+                break
 
     if target_port is None:
         print(
@@ -764,19 +778,12 @@ def main():
         )
         return
 
-    # Open the browser whenever we start fresh OR reuse an already-running UI:
-    # the user explicitly launched this command and wants to see the page.
-    if should_start or is_reuse:
-        threading.Timer(1.0, _open_browser_later, args=(target_port,)).start()
-
-    if is_reuse:
-        print(
-            f"Setup-UI läuft bereits auf http://{HOST}:{target_port} – öffne sie im Browser.",
-            file=sys.stderr,
-        )
-        return
-
-    print(f"Setup-UI läuft auf http://{HOST}:{target_port} (nur lokal). Strg+C zum Beenden.", file=sys.stderr)
+    threading.Timer(1.0, _open_browser_later, args=(target_port,)).start()
+    busy_note = "" if target_port == PORT else f" (Port {PORT} war belegt – nutze {target_port})"
+    print(
+        f"Setup-UI läuft auf http://{HOST}:{target_port} (nur lokal){busy_note}. Strg+C zum Beenden.",
+        file=sys.stderr,
+    )
     app.run(host=HOST, port=target_port, debug=False)
 
 if __name__ == "__main__":

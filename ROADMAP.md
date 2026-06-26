@@ -1,6 +1,6 @@
 # Roadmap
 
-## Next (0.1.7)
+## Next (0.1.8)
 - **Council-Modi als getrennte MCP-Tools (statt UI-Toggle):** Der Server exponiert mehrere Tools, der aufrufende Agent wählt situativ das passende — kein manuelles Umschalten. Drei Varianten, bewusst phasiert:
   - **Phase 1 (zuerst) — `ask_internal_council` (Light):** Läuft komplett auf dem Modell, bei dem der Nutzer gerade ist (Host-Abo, kein API-Key, keine Zusatzkosten). Ein einzelnes Modell nimmt nacheinander 5 verschiedene Sichtweisen ein. Das Tool führt nicht selbst aus, sondern liefert den strukturierten 5-Perspektiven-Prompt zurück, den der Host-Agent (Claude Code / Codex / Antigravity) auf seinem Abo ausführt. Einfachster, additivster Einstieg.
   - **Phase 2 — `ask_council` (bestehend):** Echtes Multi-Modell-Debating über parallele OpenRouter-Calls, keine Personas (= aktueller Karpathy-Modus, unverändert).
@@ -8,6 +8,9 @@
   - **Pro-Council an-/abschaltbar in den Einstellungen:** In der Setup-UI lässt sich jedes der drei Tools einzeln aktivieren/deaktivieren (z. B. nur internes Council für Nutzer ohne API-Key, oder Experten-Council ausblenden). Deaktivierte Tools werden vom Server gar nicht erst exponiert, damit der Host-Agent sie nicht anbietet. Da MCP-Hosts die Tool-Liste i. d. R. beim Serverstart lesen, wirkt das An-/Abschalten erst nach einem Host-/Server-Neustart — die UI muss das beim Umschalten klar kommunizieren („wird nach Neustart des Hosts aktiv", analog zum bestehenden Install-/Update-Flow).
   - **Kontextueller Diversitäts-Hinweis:** Je nach aktiviertem/gewähltem Modus erscheint ein nicht-blockierender Hinweis, wo die Aussagekraft eingeschränkt ist — z. B. beim internen Light-Council: „Achtung, die Diversität ist hier eingeschränkt, weil alle 5 Sichtweisen von *einem* Modell stammen (gemeinsame blinde Flecken). Für echte Modell-Diversität `ask_council` / `ask_expert_council` nutzen." Hinweis sowohl in der UI als auch in der Tool-Beschreibung/Ausgabe, damit der Modus nicht mit echtem Multi-Modell verwechselt wird.
   - Offene Entscheidung für Phase 3: Persona als leichter Hint vs. volle Charaktermaske (bestimmt, wie stark sich Phase 3 von Phase 2 abhebt).
+
+## Released in 0.1.7
+- **Standalone-Setup-UI reused nicht mehr eine bereits laufende (ältere) UI.** Folgefix zu 0.1.6: Der Reuse-Mechanismus war für den server-eingebetteten Auto-Start gedacht (kein Tab-Spam), aber falsch für den expliziten `llm-council-setup`-Aufruf — dort wurde der Nutzer auf eine evtl. veraltete, schon laufende UI (z. B. ein noch aktiver alter MCP-Server auf 5151) umgelenkt, statt die frisch via `uvx --refresh` geladene Version zu starten. Dadurch sah man die neue Install-/Neustart-Logik nie. `main()` startet jetzt **immer die eigene Version** (5151 wenn frei, sonst Fallback 5152–5160); der Reuse bleibt ausschließlich dem server-eingebetteten Starter vorbehalten.
 
 ## Released in 0.1.6
 - **Update-Flow geglättet** — drei zusammenhängende Verbesserungen, damit ein Versionswechsel nicht mehr von Hand nachgezogen werden muss:
