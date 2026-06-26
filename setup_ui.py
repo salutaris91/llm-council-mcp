@@ -62,6 +62,60 @@ def get_latest_pypi_version() -> Optional[str]:
 HOST = "127.0.0.1"
 PORT = 5151
 
+
+def _is_port_in_use(host: str, port: int) -> bool:
+    import socket
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(0.2)
+        return s.connect_ex((host, port)) == 0
+
+
+def _is_our_ui(host: str, port: int) -> bool:
+    import urllib.request
+    try:
+        with urllib.request.urlopen(f"http://{host}:{port}/__ping__", timeout=0.5) as response:
+            if response.status == 200:
+                return response.read().decode("utf-8").strip() == "llm-council"
+    except Exception:
+        pass
+    return False
+
+
+def resolve_ui_target(host: str = HOST, base_port: int = PORT):
+    """Decide how to bring up the Setup UI without colliding with an existing one.
+
+    Returns (target_port, should_start, is_reuse):
+      - port free            -> (base_port, True,  False)  start here
+      - our UI already there -> (base_port, False, True)   reuse the running one
+      - taken by other proc  -> (fallback,  True,  False)  start on 5152-5160
+      - no port available    -> (None,      False, False)
+
+    Callers decide whether to open a browser: the standalone UI opens on reuse
+    (the user explicitly asked for it), the server-embedded starter does not
+    (so host restarts don't spam new tabs).
+    """
+    if not _is_port_in_use(host, base_port):
+        return base_port, True, False
+    if _is_our_ui(host, base_port):
+        return base_port, False, True
+    for fallback_port in range(base_port + 1, base_port + 10):
+        if not _is_port_in_use(host, fallback_port):
+            return fallback_port, True, False
+    return None, False, False
+
+
+def _is_newer(latest: Optional[str], current: str) -> bool:
+    if not latest:
+        return False
+
+    def parse(v: str):
+        return tuple(int(x) for x in v.split(".") if x.isdigit())
+
+    try:
+        return parse(latest) > parse(current)
+    except Exception:
+        return False
+
 TRANSLATIONS = {
     "de": {
         "title": "LLM Council - Einrichtung",
@@ -118,7 +172,13 @@ TRANSLATIONS = {
         "installer_not_registered": "War nicht eingetragen in {detail}",
         "installer_uninstall_error": "Fehler beim Entfernen: {detail}",
         "update_title": "Update verfügbar!",
-        "update_body": "Eine neuere Version ({latest}) ist auf PyPI verfügbar (installiert: {installed}). Zum Aktualisieren bitte den folgenden Befehl im Terminal ausführen, danach die Seite neu laden und erneut auf 'Installieren' klicken:"
+        "update_body": "Eine neuere Version ({latest}) ist auf PyPI verfügbar (installiert: {installed}). Zum Aktualisieren bitte den folgenden Befehl im Terminal ausführen, danach die Seite neu laden und erneut auf 'Installieren' klicken:",
+        "restart_title": "🔄 Neustart nötig:",
+        "restart_hints": {
+            "claude": "Starte eine neue Claude-Code-Session, damit der MCP-Server mit der neuen Version geladen wird (laufende Sessions nutzen weiter die alte).",
+            "codex": "Starte deine Codex-Session neu (Terminal/App), damit der MCP-Server mit der neuen Version geladen wird.",
+            "antigravity": "Beende Antigravity vollständig und öffne es neu, damit der MCP-Server mit der neuen Version geladen wird.",
+        },
     },
     "en": {
         "title": "LLM Council - Setup",
@@ -175,7 +235,13 @@ TRANSLATIONS = {
         "installer_not_registered": "Was not registered in {detail}",
         "installer_uninstall_error": "Error during removal: {detail}",
         "update_title": "Update Available!",
-        "update_body": "A newer version ({latest}) is available on PyPI (installed: {installed}). To update, please run the following command in your terminal, then reload this page and click 'Install' again:"
+        "update_body": "A newer version ({latest}) is available on PyPI (installed: {installed}). To update, please run the following command in your terminal, then reload this page and click 'Install' again:",
+        "restart_title": "🔄 Restart required:",
+        "restart_hints": {
+            "claude": "Start a new Claude Code session so the MCP server loads the new version (running sessions keep using the old one).",
+            "codex": "Restart your Codex session (terminal/app) so the MCP server loads the new version.",
+            "antigravity": "Fully quit and reopen Antigravity so the MCP server loads the new version.",
+        },
     }
 }
 
@@ -234,6 +300,7 @@ PAGE_TEMPLATE = """
   .detail { font-size: 0.8em; color: #777; flex: 1; }
   .flash { background: #eef; border: 1px solid #99c; padding: 8px 12px; margin-bottom: 16px; border-radius: 4px; }
   .flash.error { background: #fee; border-color: #c99; }
+  .flash.restart { background: #e8f4ff; border: 1px solid #90caf9; color: #0d47a1; font-weight: 500; }
   form.inline { display: inline; }
   .path-override { width: 220px; font-size: 0.8em; }
   .chairman-chip { display: inline-block; background: #d0e0ff; border-radius: 16px; padding: 4px 10px; margin: 4px 4px 4px 0; font-size: 0.85em; border: 1px solid #aac; }
@@ -529,14 +596,7 @@ def index():
     t = TRANSLATIONS[lang]
     
     latest_version = get_latest_pypi_version()
-    update_available = False
-    if latest_version:
-        def parse_version(v):
-            return tuple(int(x) for x in v.split(".") if x.isdigit())
-        try:
-            update_available = parse_version(latest_version) > parse_version(current_version)
-        except Exception:
-            pass
+    update_available = _is_newer(latest_version, current_version)
     
     api_key = settings.get("openrouter_api_key", "")
     recommended_models = []
@@ -646,9 +706,19 @@ def do_install(tool):
         config_path = Path(raw) if raw else None
         _persist_path_override(tool, raw)
 
-    ok, key, detail = spec["install"](config_path=config_path)
+    # Pin the newest available version, not the version of whatever UI process
+    # happens to be running. Otherwise an outdated embedded UI would re-pin its
+    # own old version and the user could never move forward (chicken-and-egg).
+    latest_version = get_latest_pypi_version()
+    target_version = latest_version if _is_newer(latest_version, current_version) else current_version
+
+    ok, key, detail = spec["install"](config_path=config_path, version=target_version)
     translated_msg = TRANSLATIONS[lang].get(f"installer_{key}", "{detail}").format(detail=detail)
     flash(f"{spec['label']}: {translated_msg}", "ok" if ok else "error")
+    if ok:
+        restart_hint = t.get("restart_hints", {}).get(tool)
+        if restart_hint:
+            flash(f"{t['restart_title']} {restart_hint}", "restart")
     return redirect(url_for("index"))
 
 
@@ -679,14 +749,35 @@ def _persist_path_override(tool: str, raw_path: str) -> None:
     council_settings.save_settings(settings)
 
 
-def _open_browser_later():
-    webbrowser.open(f"http://{HOST}:{PORT}")
+def _open_browser_later(port: int = PORT):
+    webbrowser.open(f"http://{HOST}:{port}")
 
 
 def main():
-    threading.Timer(1.0, _open_browser_later).start()
-    print(f"Setup-UI läuft auf http://{HOST}:{PORT} (nur lokal). Strg+C zum Beenden.", file=sys.stderr)
-    app.run(host=HOST, port=PORT, debug=False)
+    target_port, should_start, is_reuse = resolve_ui_target(HOST, PORT)
+
+    if target_port is None:
+        print(
+            f"Konnte keinen freien Port ({PORT}-{PORT + 9}) finden. "
+            "Bitte den belegenden Prozess beenden und erneut starten.",
+            file=sys.stderr,
+        )
+        return
+
+    # Open the browser whenever we start fresh OR reuse an already-running UI:
+    # the user explicitly launched this command and wants to see the page.
+    if should_start or is_reuse:
+        threading.Timer(1.0, _open_browser_later, args=(target_port,)).start()
+
+    if is_reuse:
+        print(
+            f"Setup-UI läuft bereits auf http://{HOST}:{target_port} – öffne sie im Browser.",
+            file=sys.stderr,
+        )
+        return
+
+    print(f"Setup-UI läuft auf http://{HOST}:{target_port} (nur lokal). Strg+C zum Beenden.", file=sys.stderr)
+    app.run(host=HOST, port=target_port, debug=False)
 
 if __name__ == "__main__":
     main()

@@ -1,6 +1,6 @@
 # Roadmap
 
-## Next (0.1.6)
+## Next (0.1.7)
 - **Council-Modi als getrennte MCP-Tools (statt UI-Toggle):** Der Server exponiert mehrere Tools, der aufrufende Agent wählt situativ das passende — kein manuelles Umschalten. Drei Varianten, bewusst phasiert:
   - **Phase 1 (zuerst) — `ask_internal_council` (Light):** Läuft komplett auf dem Modell, bei dem der Nutzer gerade ist (Host-Abo, kein API-Key, keine Zusatzkosten). Ein einzelnes Modell nimmt nacheinander 5 verschiedene Sichtweisen ein. Das Tool führt nicht selbst aus, sondern liefert den strukturierten 5-Perspektiven-Prompt zurück, den der Host-Agent (Claude Code / Codex / Antigravity) auf seinem Abo ausführt. Einfachster, additivster Einstieg.
   - **Phase 2 — `ask_council` (bestehend):** Echtes Multi-Modell-Debating über parallele OpenRouter-Calls, keine Personas (= aktueller Karpathy-Modus, unverändert).
@@ -8,6 +8,12 @@
   - **Pro-Council an-/abschaltbar in den Einstellungen:** In der Setup-UI lässt sich jedes der drei Tools einzeln aktivieren/deaktivieren (z. B. nur internes Council für Nutzer ohne API-Key, oder Experten-Council ausblenden). Deaktivierte Tools werden vom Server gar nicht erst exponiert, damit der Host-Agent sie nicht anbietet. Da MCP-Hosts die Tool-Liste i. d. R. beim Serverstart lesen, wirkt das An-/Abschalten erst nach einem Host-/Server-Neustart — die UI muss das beim Umschalten klar kommunizieren („wird nach Neustart des Hosts aktiv", analog zum bestehenden Install-/Update-Flow).
   - **Kontextueller Diversitäts-Hinweis:** Je nach aktiviertem/gewähltem Modus erscheint ein nicht-blockierender Hinweis, wo die Aussagekraft eingeschränkt ist — z. B. beim internen Light-Council: „Achtung, die Diversität ist hier eingeschränkt, weil alle 5 Sichtweisen von *einem* Modell stammen (gemeinsame blinde Flecken). Für echte Modell-Diversität `ask_council` / `ask_expert_council` nutzen." Hinweis sowohl in der UI als auch in der Tool-Beschreibung/Ausgabe, damit der Modus nicht mit echtem Multi-Modell verwechselt wird.
   - Offene Entscheidung für Phase 3: Persona als leichter Hint vs. volle Charaktermaske (bestimmt, wie stark sich Phase 3 von Phase 2 abhebt).
+
+## Released in 0.1.6
+- **Update-Flow geglättet** — drei zusammenhängende Verbesserungen, damit ein Versionswechsel nicht mehr von Hand nachgezogen werden muss:
+  - **Standalone-Setup-UI crasht nicht mehr bei belegtem Port.** `llm-council-setup` nutzt jetzt dieselbe „reuse-or-fallback"-Logik wie der server-eingebettete Starter (gemeinsame `resolve_ui_target`): läuft unsere UI schon auf 5151, wird einfach der Browser daraufgelenkt; ist der Port von einem Fremdprozess belegt, wird auf 5152–5160 ausgewichen — statt mit „Address already in use" abzubrechen.
+  - **„Install" pinnt die neueste PyPI-Version statt der laufenden.** Behebt das Henne-Ei-Problem: bisher schrieb eine veraltete laufende UI ihren *eigenen* alten Versions-Pin zurück, sodass man nie vorwärtskam. `get_uvx_args`/die Install-Pfade nehmen jetzt die latest-Version, wenn ein Update erkannt wurde.
+  - **Per-Host-Neustart-Hinweis nach dem Install.** Nach erfolgreicher Registrierung zeigt die UI pro Host genau den passenden Schritt (Claude Code/Codex: neue Session; Antigravity: App neu starten), weil MCP-Hosts ihre Config nur beim eigenen Start neu einlesen.
 
 ## Released in 0.1.5
 - **Bugfix: Setup-UI öffnet sich nicht mehr bei jedem Server-Neustart erneut im Browser.** Wenn die UI bereits auf Port 5151 läuft (z. B. von einem vorherigen Start, den der LLM-Host neu gestartet hat), wurde zwar kein zweiter Flask-Server gestartet, aber trotzdem ein neuer Browser-Tab geöffnet. `_maybe_start_setup_ui` unterdrückt das Öffnen jetzt, wenn die eigene UI schon erreichbar ist.

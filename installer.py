@@ -50,10 +50,11 @@ def _get_real_config_dir() -> str:
 
 DEV_MODE = False
 
-def get_uvx_args(uvx_path: str, base_dir: Path, real_config_dir: str) -> list[str]:
+def get_uvx_args(uvx_path: str, base_dir: Path, real_config_dir: str, version: Optional[str] = None) -> list[str]:
     if DEV_MODE:
         return [uvx_path, "-q", "--from", str(base_dir), "llm-council-mcp", f"--config-dir={real_config_dir}"]
-    return [uvx_path, "-q", "--from", f"llm-council-mcp-server@{__version__}", "llm-council-mcp", f"--config-dir={real_config_dir}"]
+    pin = version or __version__
+    return [uvx_path, "-q", "--from", f"llm-council-mcp-server@{pin}", "llm-council-mcp", f"--config-dir={real_config_dir}"]
 
 
 # ---------------------------------------------------------------------------
@@ -78,20 +79,20 @@ def claude_is_installed() -> Tuple[bool, str, str]:
         return False, "check_error", str(e)
 
 
-def claude_install() -> Tuple[bool, str, str]:
+def claude_install(version: Optional[str] = None) -> Tuple[bool, str, str]:
     binary = _claude_binary()
     if not binary:
         return False, "claude_not_found", ""
-        
+
     uvx_path = _get_uvx_path()
     if not uvx_path:
         return False, "uvx_not_found", ""
-        
+
     base_dir = _get_base_dir()
     real_config_dir = _get_real_config_dir()
-    
+
     try:
-        cmd = [binary, "mcp", "add", SERVER_NAME, "--scope", "user", "--"] + get_uvx_args(uvx_path, base_dir, real_config_dir)
+        cmd = [binary, "mcp", "add", SERVER_NAME, "--scope", "user", "--"] + get_uvx_args(uvx_path, base_dir, real_config_dir, version)
         result = subprocess.run(
             cmd,
             capture_output=True, text=True, timeout=30,
@@ -146,24 +147,24 @@ def codex_is_installed(config_path: Optional[Path] = None) -> Tuple[bool, str, s
     return installed, "path_info", str(path)
 
 
-def codex_install(config_path: Optional[Path] = None) -> Tuple[bool, str, str]:
+def codex_install(config_path: Optional[Path] = None, version: Optional[str] = None) -> Tuple[bool, str, str]:
     path = config_path or DEFAULT_CODEX_CONFIG_PATH
     err = _require_toml_libs()
     if err:
         return False, "toml_libs_missing", err
-        
+
     uvx_path = _get_uvx_path()
     if not uvx_path:
         return False, "uvx_not_found", ""
-        
+
     base_dir = _get_base_dir()
     real_config_dir = _get_real_config_dir()
-    
+
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         data = _toml_reader.loads(path.read_text()) if path.exists() else {}
         data.setdefault("mcp_servers", {})
-        args = get_uvx_args(uvx_path, base_dir, real_config_dir)
+        args = get_uvx_args(uvx_path, base_dir, real_config_dir, version)
         data["mcp_servers"][SERVER_NAME] = {
             "command": args[0],
             "args": args[1:],
@@ -215,26 +216,26 @@ def antigravity_is_installed(config_path: Optional[Path] = None) -> Tuple[bool, 
     return installed, "path_info", str(path)
 
 
-def antigravity_install(config_path: Optional[Path] = None) -> Tuple[bool, str, str]:
+def antigravity_install(config_path: Optional[Path] = None, version: Optional[str] = None) -> Tuple[bool, str, str]:
     path = config_path or DEFAULT_ANTIGRAVITY_CONFIG_PATH
-    
+
     uvx_path = _get_uvx_path()
     if not uvx_path:
         return False, "uvx_not_found", ""
-        
+
     base_dir = _get_base_dir()
     real_config_dir = _get_real_config_dir()
-    
+
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         data = json.loads(path.read_text()) if path.exists() else {}
         data.setdefault("mcpServers", {})
-        
+
         # Cleanup stale spike
         if "llm-council-spike" in data["mcpServers"]:
             del data["mcpServers"]["llm-council-spike"]
-            
-        args = get_uvx_args(uvx_path, base_dir, real_config_dir)
+
+        args = get_uvx_args(uvx_path, base_dir, real_config_dir, version)
         data["mcpServers"][SERVER_NAME] = {
             "command": args[0],
             "args": args[1:]
@@ -280,14 +281,14 @@ TOOLS = {
     "claude": {
         "label": "Claude Code",
         "is_installed": lambda **kw: claude_is_installed(),
-        "install": lambda **kw: claude_install(),
+        "install": lambda version=None, **kw: claude_install(version=version),
         "uninstall": lambda **kw: claude_uninstall(),
         "needs_path_override": False,
     },
     "codex": {
         "label": "Codex CLI",
         "is_installed": lambda config_path=None, **kw: codex_is_installed(config_path),
-        "install": lambda config_path=None, **kw: codex_install(config_path),
+        "install": lambda config_path=None, version=None, **kw: codex_install(config_path, version=version),
         "uninstall": lambda config_path=None, **kw: codex_uninstall(config_path),
         "needs_path_override": True,
         "default_path": str(DEFAULT_CODEX_CONFIG_PATH),
@@ -295,7 +296,7 @@ TOOLS = {
     "antigravity": {
         "label": "Antigravity",
         "is_installed": lambda config_path=None, **kw: antigravity_is_installed(config_path),
-        "install": lambda config_path=None, **kw: antigravity_install(config_path),
+        "install": lambda config_path=None, version=None, **kw: antigravity_install(config_path, version=version),
         "uninstall": lambda config_path=None, **kw: antigravity_uninstall(config_path),
         "needs_path_override": True,
         "default_path": str(DEFAULT_ANTIGRAVITY_CONFIG_PATH),

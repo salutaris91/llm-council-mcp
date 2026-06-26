@@ -191,47 +191,14 @@ def _maybe_start_setup_ui() -> None:
         if not settings.get("open_ui_on_start", True):
             return
 
-        host = "127.0.0.1"
-        port = 5151
-        target_port = None
-        should_start_ui = False
-        should_open_browser = True
+        import setup_ui
+        host = setup_ui.HOST
+        target_port, should_start_ui, is_reuse = setup_ui.resolve_ui_target(host, setup_ui.PORT)
 
-        import socket
-        def is_port_in_use(p: int) -> bool:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.settimeout(0.2)
-                return s.connect_ex((host, p)) == 0
-
-        def is_our_ui(p: int) -> bool:
-            import urllib.request
-            try:
-                url = f"http://{host}:{p}/__ping__"
-                with urllib.request.urlopen(url, timeout=0.5) as response:
-                    if response.status == 200:
-                        return response.read().decode('utf-8').strip() == "llm-council"
-            except Exception:
-                pass
-            return False
-
-        if is_port_in_use(port):
-            if is_our_ui(port):
-                target_port = port
-                should_start_ui = False
-                # UI is already running (e.g. from a previous server start that
-                # the LLM client restarted). Don't spawn another browser tab.
-                should_open_browser = False
-            else:
-                for fallback_port in range(5152, 5161):
-                    if not is_port_in_use(fallback_port):
-                        target_port = fallback_port
-                        should_start_ui = True
-                        break
-                else:
-                    should_open_browser = False
-        else:
-            target_port = port
-            should_start_ui = True
+        # Only open a browser tab when we actually start the UI. If our UI is
+        # already running (is_reuse) — e.g. from a previous server start that
+        # the LLM client restarted — don't spawn another tab.
+        should_open_browser = should_start_ui
 
         if should_start_ui and target_port:
             import threading
