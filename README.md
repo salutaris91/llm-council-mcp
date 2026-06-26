@@ -44,10 +44,9 @@ git clone https://github.com/salutaris91/llm-council-mcp.git
 cd llm-council-mcp
 python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
 
-cp .env.example .env
-# Open .env and add your OPENROUTER_API_KEY.
+# Install dependencies (either via requirements.txt or directly using pyproject.toml)
+pip install -r requirements.txt  # Or: pip install .
 ```
 Run the Setup UI locally:
 ```bash
@@ -56,11 +55,43 @@ python3 setup_ui.py
 
 ---
 
-## Setup UI
+## 🚀 Quick Start / First Run
 
-The local web interface allows you to:
-- Set your OpenRouter API Key, council models, and Chairman model (saves to `.env` or config directory).
-- Install/uninstall the MCP server in Claude Code, Codex CLI, and Antigravity with a single click.
+Follow these steps to get up and running:
+
+1. **Get an OpenRouter API Key:**
+   - Create an API key at **[openrouter.ai/keys](https://openrouter.ai/keys)**.
+   - *Note:* Make sure your OpenRouter account has a small funded balance, as each query runs multiple models in parallel.
+2. **Launch the Setup UI:**
+   - Run `uvx --from llm-council-mcp-server llm-council-setup` in your terminal. This will automatically open the local configuration panel in your web browser.
+3. **Configure Settings:**
+   - Paste your API key, select your preferred council and Chairman models, and click **Save**.
+4. **Register the Server:**
+   - Under the **Install** section of the Setup UI, click the **Install** button next to your desired tool (Claude Code, Codex CLI, or Antigravity).
+5. **Restart Your Tool:**
+   - Fully restart your MCP-enabled editor/client (e.g. reload Antigravity) to apply the changes.
+6. **Start Deliberating:**
+   - In your chat client, run a query (see [Usage](#usage) below).
+
+---
+
+## Setup UI & Settings Storage
+
+The Setup UI saves your API key, model selections, and custom temperatures to a `settings.json` file in your user config directory (e.g. `~/Library/Application Support/llm-council` on macOS).
+*Legacy Note:* If you have an existing `.env` file from manual setups, it will be automatically imported into `settings.json` on the first start, and can be safely removed afterwards.
+
+---
+
+## Usage
+
+To use the council, simply ask your MCP host to query it, passing any code context you want it to evaluate.
+
+**Example Prompts:**
+* *"Use the council to get a second opinion on whether we should use Redis or an in-memory cache for this class."*
+* *"Ask the council to review my implementation of this sorting algorithm."*
+
+**What happens under the hood:**
+The server will run the 3-stage consensus pipeline. Because this involves multiple parallel and sequential LLM calls, the tool response typically takes **30 to 120 seconds** to complete. It will return a formatted Markdown report consisting of the Chairman's synthesis, followed by the individual models' responses and rankings.
 
 ---
 
@@ -82,7 +113,7 @@ args = ["--from", "llm-council-mcp-server", "llm-council-mcp"]
 ```
 
 #### Antigravity
-Add to `mcp_config.json`:
+Add to the configuration file located at `~/.gemini/config/mcp_config.json` (do not use `~/.gemini/antigravity/`):
 ```json
 {
   "mcpServers": {
@@ -109,7 +140,7 @@ command = "/path/to/venv/bin/python3"
 args = ["/path/to/llm-council-mcp/server.py"]
 ```
 
-#### Antigravity (`mcp_config.json`)
+#### Antigravity (`~/.gemini/config/mcp_config.json`)
 ```json
 {
   "mcpServers": {
@@ -120,6 +151,19 @@ args = ["/path/to/llm-council-mcp/server.py"]
   }
 }
 ```
+
+---
+
+## 🛠️ Troubleshooting
+
+* **Server not showing up in tool?**
+  - Fully restart the client application (Claude Code, Codex, or Antigravity). MCP servers are loaded on startup.
+* **Antigravity isn't picking up the server?**
+  - Verify that the server is written to `~/.gemini/config/mcp_config.json`. If you manually created a file in `~/.gemini/antigravity/`, delete it and use the correct path.
+* **OpenRouter API Errors (e.g. 401, 402)?**
+  - Open the Setup UI and double-check your API key. Make sure your OpenRouter account has positive credit.
+* **Check the Logs:**
+  - Standard error logs are captured by your MCP host. Check your tool's log output or terminal window for details.
 
 ---
 
@@ -170,10 +214,9 @@ git clone https://github.com/salutaris91/llm-council-mcp.git
 cd llm-council-mcp
 python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
 
-cp .env.example .env
-# Öffne .env und trage deinen echten OPENROUTER_API_KEY ein.
+# Abhängigkeiten installieren (entweder über requirements.txt oder pyproject.toml)
+pip install -r requirements.txt  # Oder: pip install .
 ```
 Lokale Setup-UI starten:
 ```bash
@@ -182,11 +225,43 @@ python3 setup_ui.py
 
 ---
 
-## Setup-UI
+## 🚀 Schnellstart / Erster Lauf
 
-Die lokale Weboberfläche ermöglicht es dir:
-- Deinen OpenRouter-Key, die Council-Modelle und das Chairman-Modell zu setzen (speichert in `.env` oder Konfigurationsverzeichnis).
-- Per Knopfdruck den MCP-Server in Claude Code, Codex CLI und Antigravity zu installieren/entfernen.
+Befolge diese Schritte, um direkt loszulegen:
+
+1. **OpenRouter API-Key holen:**
+   - Erstelle einen API-Key auf **[openrouter.ai/keys](https://openrouter.ai/keys)**.
+   - *Hinweis:* Stelle sicher, dass dein OpenRouter-Konto ein kleines Guthaben aufweist, da pro Anfrage mehrere Modell-Aufrufe parallel durchgeführt werden.
+2. **Setup-UI starten:**
+   - Führe `uvx --from llm-council-mcp-server llm-council-setup` im Terminal aus. Dadurch öffnet sich die lokale Konfigurationsoberfläche in deinem Browser.
+3. **Einstellungen konfigurieren:**
+   - Trage deinen API-Key ein, wähle deine bevorzugten Council- und Chairman-Modelle und klicke auf **Speichern**.
+4. **Server registrieren:**
+   - Klicke im Bereich **Install** der Setup-UI auf den Button **Install** neben dem Tool deiner Wahl (Claude Code, Codex CLI oder Antigravity).
+5. **Tool neu starten:**
+   - Starte deinen MCP-Client / Editor (z. B. Antigravity) komplett neu, um die Registrierung zu laden.
+6. **Council anfragen:**
+   - Stelle deine Frage im Chat-Interface (siehe [Nutzung](#nutzung-1) unten).
+
+---
+
+## Setup-UI & Speicherort der Einstellungen
+
+Die Setup-UI speichert deinen API-Key, die Modell-Auswahl und angepasste Temperaturen in einer Datei namens `settings.json` im Konfigurationsverzeichnis (z. B. `~/Library/Application Support/llm-council` unter macOS).
+*Migration:* Falls noch eine alte `.env`-Datei aus manuellen Setups vorhanden ist, wird diese beim ersten Start automatisch in die `settings.json` importiert und kann danach gelöscht werden.
+
+---
+
+## Nutzung
+
+Um den Council zu nutzen, bitte einfach deinen MCP-Client darum, das Tool `ask_council` aufzurufen und übergib die Frage sowie den zu prüfenden Code.
+
+**Beispiel-Prompts:**
+* *"Nutze den Council für eine zweite Meinung dazu, ob wir für diese Klasse Redis oder einen In-Memory-Cache nehmen sollten."*
+* *"Frag den Council nach einem Review für meine Implementierung dieses Sortieralgorithmus."*
+
+**Was im Hintergrund passiert:**
+Der Server führt die 3 Stufen des Council-Prozesses durch. Da dies mehrere parallele und sequenzielle LLM-Aufrufe erfordert, dauert die Antwort in der Regel **30 bis 120 Sekunden**. Du erhältst einen formatierten Markdown-Report mit der Synthese des Chairmans, gefolgt von den Antworten der Einzelmodelle sowie deren Rankings.
 
 ---
 
@@ -208,7 +283,7 @@ args = ["--from", "llm-council-mcp-server", "llm-council-mcp"]
 ```
 
 #### Antigravity
-Trage Folgendes in `mcp_config.json` ein:
+Trage Folgendes in die Konfigurationsdatei unter `~/.gemini/config/mcp_config.json` ein (nutze nicht `~/.gemini/antigravity/`):
 ```json
 {
   "mcpServers": {
@@ -235,7 +310,7 @@ command = "/pfad/zu/venv/bin/python3"
 args = ["/pfad/zu/llm-council-mcp/server.py"]
 ```
 
-#### Antigravity (`mcp_config.json`)
+#### Antigravity (`~/.gemini/config/mcp_config.json`)
 ```json
 {
   "mcpServers": {
@@ -246,6 +321,19 @@ args = ["/pfad/zu/llm-council-mcp/server.py"]
   }
 }
 ```
+
+---
+
+## 🛠️ Fehlerbehebung
+
+* **Server erscheint nicht im Tool?**
+  - Starte die Client-Anwendung (Claude Code, Codex oder Antigravity) komplett neu. MCP-Server werden beim Start geladen.
+* **Antigravity erkennt den Server nicht?**
+  - Überprüfe, ob der Server-Eintrag in `~/.gemini/config/mcp_config.json` steht. Falls du manuell eine Datei in `~/.gemini/antigravity/` angelegt hast, lösche diese und nutze den korrekten Pfad.
+* **Fehler beim Aufruf von OpenRouter (z. B. 401, 402)?**
+  - Öffne die Setup-UI und kontrolliere deinen API-Key. Vergewissere dich, dass dein OpenRouter-Konto über ausreichend Guthaben verfügt.
+* **Logs einsehen:**
+  - Fehlermeldungen werden von deinem MCP-Client erfasst. Siehe in den Logs des Editors oder im Terminalfenster nach Details.
 
 ---
 

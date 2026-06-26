@@ -1,6 +1,6 @@
 [project]
 name = "llm-council-mcp-server"
-version = "0.1.0"
+version = "0.1.1"
 description = "Local MCP server for the LLM Council workflow"
 readme = "README.md"
 license = { text = "MIT" }

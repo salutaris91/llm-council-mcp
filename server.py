@@ -30,6 +30,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("llm_council_mcp")
 
 mcp = FastMCP("llm_council_mcp")
+mcp._mcp_server.version = "0.1.1"
 
 
 class AskCouncilInput(BaseModel):
