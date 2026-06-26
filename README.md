@@ -30,11 +30,11 @@ This tool replicates the AI deliberation process of the original project in thre
 
 The AI prompt instructions and settings are copied exactly from the original project to ensure the same high quality.
 
-### What is left out (to keep it clean and simple):
-- **Web Search / Internet Access in Stage 1:** The models answer based on their training and the context you provide.
-- **Editable Prompts in the UI:** The AI instructions are kept permanent to guarantee reliable results. However, you can adjust the AI's "creativity" (temperatures) and length limits directly in the Setup UI.
-- **Chat History:** It is designed for single, deep-dive questions rather than long back-and-forth conversations.
-- **Direct File Access:** The tool does not read your files directly. Instead, your editor (like Claude Code or Antigravity) reads the relevant files and passes the code context automatically.
+### What is currently left out (kept simple for now, but planned as optional features later):
+- **Web Search / Internet Access in Stage 1:** Currently, models answer based on training and context. (Planned as an optional feature in a future release).
+- **Editable Prompts / Custom Roles (e.g. Critic mode) in the UI:** Prompt templates are currently hardcoded for reliability. (Planned as an optional settings section).
+- **Chat History & Interactive Discussion:** Currently designed for deep-dive single questions. (An optional discussion mode between Claude and the Chairman to decide which files are needed is planned).
+- **Direct File Access:** The server does not read your workspace directly for security/simplicity. Your client (Claude Code, Antigravity) reads the files and passes them as parameters.
 
 ---
 
@@ -210,11 +210,11 @@ Dieses Tool bildet den Entscheidungsprozess des Originalprojekts in drei einfach
 
 Die KI-Anweisungen (Prompts) und Einstellungen wurden exakt aus dem Originalprojekt übernommen, um die gleiche hohe Qualität der Antworten zu garantieren.
 
-### Was bewusst weggelassen wurde (für maximale Einfachheit):
-- **Web-Suche / Internetzugriff in Stufe 1:** Die Modelle antworten basierend auf ihrem Wissen und dem von dir übergebenen Kontext.
-- **Bearbeitbare Prompt-Vorlagen in der UI:** Die KI-Anweisungen sind fest hinterlegt, um zuverlässige Ergebnisse zu sichern. Du kannst jedoch die „Kreativität“ der KI (Temperaturen) und Längenbegrenzungen in der Setup-UI anpassen.
-- **Chat-Verlauf:** Das Tool ist für präzise Einzelentscheidungen gedacht, nicht für lange Hin-und-Her-Gespräche.
-- **Direkter Dateizugriff:** Das Tool liest deine Dateien nicht selbstständig von der Festplatte. Stattdessen liest dein Editor (wie Claude Code oder Antigravity) den Code aus und übergibt ihn automatisch an das Tool.
+### Was aktuell bewusst weggelassen wurde (für maximale Einfachheit – später als optionale Funktionen geplant):
+- **Web-Suche / Internetzugriff in Stufe 1:** Modelle antworten aktuell basierend auf ihrem Wissen und dem Kontext. (Als optionale Funktion für spätere Releases geplant).
+- **Bearbeitbare Prompt-Vorlagen / Eigene Rollen (z. B. Kritiker-Modus) in der UI:** Prompt-Vorlagen sind für stabile Ergebnisse fest hinterlegt. (Als optionaler Einstellungsbereich geplant).
+- **Chat-Verlauf & Interaktive Diskussion:** Aktuell für präzise Einzelanfragen konzipiert. (Ein optionaler Diskussionsmodus zwischen Client und Chairman zur gemeinschaftlichen Ermittlung benötigter Dateien ist geplant).
+- **Direkter Dateizugriff:** Der Server liest deine Dateien aus Sicherheits- und Einfachheitsgründen nicht selbst. Dein Client (Claude Code, Antigravity) liest den Code aus und übergibt ihn automatisch.
 
 ---
 
