@@ -16,11 +16,19 @@ from pathlib import Path
 from typing import Optional, Tuple
 import platformdirs
 
+import sys
+
 try:
-    import tomli
+    if sys.version_info >= (3, 11):
+        import tomllib as _toml_reader      # Stdlib-Reader ab 3.11
+    else:
+        import tomli as _toml_reader
+except ModuleNotFoundError:
+    _toml_reader = None
+
+try:
     import tomli_w
-except ImportError:  # pragma: no cover
-    tomli = None
+except ModuleNotFoundError:
     tomli_w = None
 
 SERVER_NAME = "llm-council"
@@ -44,7 +52,7 @@ DEV_MODE = False
 def get_uvx_args(uvx_path: str, base_dir: Path, real_config_dir: str) -> list[str]:
     if DEV_MODE:
         return [uvx_path, "-q", "--from", str(base_dir), "llm-council-mcp", f"--config-dir={real_config_dir}"]
-    return [uvx_path, "-q", "--from", "llm-council-mcp-server@0.1.2", "llm-council-mcp", f"--config-dir={real_config_dir}"]
+    return [uvx_path, "-q", "--from", "llm-council-mcp-server@0.1.3", "llm-council-mcp", f"--config-dir={real_config_dir}"]
 
 
 # ---------------------------------------------------------------------------
@@ -117,7 +125,7 @@ def claude_uninstall() -> Tuple[bool, str, str]:
 # ---------------------------------------------------------------------------
 
 def _require_toml_libs() -> Optional[str]:
-    if tomli is None or tomli_w is None:
+    if _toml_reader is None or tomli_w is None:
         return "tomli/tomli_w fehlen. Bitte 'pip install -r requirements.txt' im venv ausführen."
     return None
 
@@ -130,7 +138,7 @@ def codex_is_installed(config_path: Optional[Path] = None) -> Tuple[bool, str, s
     if err:
         return False, "toml_libs_missing", err
     try:
-        data = tomli.loads(path.read_text())
+        data = _toml_reader.loads(path.read_text())
     except Exception as e:  # noqa: BLE001
         return False, "check_error", str(e)
     installed = SERVER_NAME in data.get("mcp_servers", {})
@@ -152,7 +160,7 @@ def codex_install(config_path: Optional[Path] = None) -> Tuple[bool, str, str]:
     
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
-        data = tomli.loads(path.read_text()) if path.exists() else {}
+        data = _toml_reader.loads(path.read_text()) if path.exists() else {}
         data.setdefault("mcp_servers", {})
         args = get_uvx_args(uvx_path, base_dir, real_config_dir)
         data["mcp_servers"][SERVER_NAME] = {
@@ -177,7 +185,7 @@ def codex_uninstall(config_path: Optional[Path] = None) -> Tuple[bool, str, str]
     if err:
         return False, "toml_libs_missing", err
     try:
-        data = tomli.loads(path.read_text())
+        data = _toml_reader.loads(path.read_text())
         if SERVER_NAME in data.get("mcp_servers", {}):
             del data["mcp_servers"][SERVER_NAME]
             fd, tmp_path = tempfile.mkstemp(dir=path.parent, prefix=".config.", suffix=".tmp")

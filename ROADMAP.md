@@ -1,7 +1,10 @@
 # Roadmap
 
-## Next (0.1.3)
-- GitHub-Repo: an Paketnamen anpassen (`llm-council-mcp-server`) und Sichtbarkeit entscheiden.
+## Next (0.1.4)
+
+## Released in 0.1.3
+- Codex-Install-Button repariert: tomli-Import scheiterte auf Python 3.11+ (uvx) und blockierte die Codex-Registrierung. Nutzt jetzt stdlib tomllib zum Lesen.
+- Repo-URLs an den umbenannten GitHub-Namen (llm-council-mcp-server) angeglichen.
 
 ## Released in 0.1.2
 - Bugfix: requirements.txt bereinigt (python-dotenv entfernt, platformdirs>=4.0.0 hinzugefügt) für Method B.

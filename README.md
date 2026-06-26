@@ -50,8 +50,8 @@ This automatically opens `http://127.0.0.1:5151` in your browser.
 ### Method B: Manual Clone (for Development)
 If you want to modify the source code locally:
 ```bash
-git clone https://github.com/salutaris91/llm-council-mcp.git
-cd llm-council-mcp
+git clone https://github.com/salutaris91/llm-council-mcp-server.git
+cd llm-council-mcp-server
 python3 -m venv venv
 source venv/bin/activate
 
@@ -237,8 +237,8 @@ Dies öffnet automatisch `http://127.0.0.1:5151` in deinem Browser.
 ### Methode B: Manueller Klon (für Entwickler)
 Wenn du den Quellcode lokal anpassen möchtest:
 ```bash
-git clone https://github.com/salutaris91/llm-council-mcp.git
-cd llm-council-mcp
+git clone https://github.com/salutaris91/llm-council-mcp-server.git
+cd llm-council-mcp-server
 python3 -m venv venv
 source venv/bin/activate
 

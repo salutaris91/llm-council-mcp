@@ -5,5 +5,5 @@ platformdirs>=4.0.0
 
 # Für die optionale lokale Setup-/Settings-UI (setup_ui.py):
 flask>=3.0.0
-tomli>=2.0.0
+tomli>=2.0.0; python_version < "3.11"
 tomli_w>=1.0.0
