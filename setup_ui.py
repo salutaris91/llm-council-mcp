@@ -149,6 +149,8 @@ TRANSLATIONS = {
         "status_installed": "✓ installiert",
         "status_not_installed": "– nicht installiert",
         "btn_install": "Installieren",
+        "btn_update": "Aktualisieren",
+        "btn_reinstall": "Neu eintragen",
         "btn_remove": "Entfernen",
         "hint_paths": "Antigravity/Codex-Pfade sind Vermutungen basierend auf der aktuellen Doku und können je Version abweichen - im Feld oben jederzeit anpassbar.",
         "flash_saved": "Einstellungen gespeichert.",
@@ -212,6 +214,8 @@ TRANSLATIONS = {
         "status_installed": "✓ installed",
         "status_not_installed": "– not installed",
         "btn_install": "Install",
+        "btn_update": "Update",
+        "btn_reinstall": "Re-register",
         "btn_remove": "Remove",
         "hint_paths": "Antigravity/Codex paths are guesses based on current documentation and may vary per version - customizable in the field above.",
         "flash_saved": "Settings saved.",
@@ -302,6 +306,7 @@ PAGE_TEMPLATE = """
   .flash { background: #eef; border: 1px solid #99c; padding: 8px 12px; margin-bottom: 16px; border-radius: 4px; }
   .flash.error { background: #fee; border-color: #c99; }
   .flash.restart { background: #e8f4ff; border: 1px solid #90caf9; color: #0d47a1; font-weight: 500; }
+  button.btn-update { background: #fff4e0; border-color: #ffb74d; color: #b76e00; font-weight: 600; }
   form.inline { display: inline; }
   .path-override { width: 220px; font-size: 0.8em; }
   .chairman-chip { display: inline-block; background: #d0e0ff; border-radius: 16px; padding: 4px 10px; margin: 4px 4px 4px 0; font-size: 0.85em; border: 1px solid #aac; }
@@ -423,7 +428,7 @@ PAGE_TEMPLATE = """
   <div class="tool-row">
     <span class="tool-name">{{ tool.label }}</span>
     <span class="{{ 'status-ok' if tool.installed else 'status-missing' }}">
-      {{ t.status_installed if tool.installed else t.status_not_installed }}
+      {{ t.status_installed if tool.installed else t.status_not_installed }}{% if tool.installed and tool.pinned %} (@{{ tool.pinned }}){% endif %}
     </span>
     <span class="detail">{{ tool.detail }}</span>
     <span>
@@ -431,7 +436,7 @@ PAGE_TEMPLATE = """
         {% if tool.needs_path_override %}
           <input class="path-override" type="text" name="config_path" value="{{ tool.path_value }}">
         {% endif %}
-        <button type="submit">{{ t.btn_install }}</button>
+        <button type="submit"{% if tool.needs_update %} class="btn-update"{% endif %}>{% if not tool.installed %}{{ t.btn_install }}{% elif tool.needs_update %}{{ t.btn_update }}{% else %}{{ t.btn_reinstall }}{% endif %}</button>
       </form>
       <form class="inline" method="post" action="{{ url_for('do_uninstall', tool=tool.key) }}">
         {% if tool.needs_path_override %}
@@ -598,7 +603,9 @@ def index():
     
     latest_version = get_latest_pypi_version()
     update_available = _is_newer(latest_version, current_version)
-    
+    # The version that clicking "Install" would write — same rule as do_install.
+    target_version = latest_version if update_available else current_version
+
     api_key = settings.get("openrouter_api_key", "")
     recommended_models = []
     other_models = []
@@ -621,11 +628,20 @@ def index():
         override = _config_path_override(settings, tool_key)
         installed, key, detail = spec["is_installed"](config_path=override)
         translated_detail = TRANSLATIONS[lang].get(f"installer_{key}", "{detail}").format(detail=detail)
+        pinned = None
+        if installed and "pinned_version" in spec:
+            try:
+                pinned = spec["pinned_version"](config_path=override)
+            except Exception:
+                pinned = None
+        needs_update = bool(installed and pinned and pinned != target_version)
         tools.append({
             "key": tool_key,
             "label": spec["label"],
             "installed": installed,
             "detail": translated_detail,
+            "pinned": pinned,
+            "needs_update": needs_update,
             "needs_path_override": spec["needs_path_override"],
             "path_value": str(override) if override else spec.get("default_path", ""),
         })

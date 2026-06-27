@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -55,6 +56,15 @@ def get_uvx_args(uvx_path: str, base_dir: Path, real_config_dir: str, version: O
         return [uvx_path, "-q", "--from", str(base_dir), "llm-council-mcp", f"--config-dir={real_config_dir}"]
     pin = version or __version__
     return [uvx_path, "-q", "--from", f"llm-council-mcp-server@{pin}", "llm-council-mcp", f"--config-dir={real_config_dir}"]
+
+
+_PIN_RE = re.compile(r"llm-council-mcp-server@([0-9][0-9A-Za-z.\-]*)")
+
+
+def _extract_pin(text: str) -> Optional[str]:
+    """Pull the pinned version out of an args string / CLI output, if present."""
+    m = _PIN_RE.search(text or "")
+    return m.group(1) if m else None
 
 
 # ---------------------------------------------------------------------------
@@ -277,10 +287,52 @@ def antigravity_uninstall(config_path: Optional[Path] = None) -> Tuple[bool, str
         return False, "uninstall_error", str(e)
 
 
+# ---------------------------------------------------------------------------
+# Pinned-version readers (so the UI can show which version each host runs)
+# ---------------------------------------------------------------------------
+
+def claude_pinned_version() -> Optional[str]:
+    binary = _claude_binary()
+    if not binary:
+        return None
+    try:
+        result = subprocess.run(
+            [binary, "mcp", "list"], capture_output=True, text=True, timeout=15
+        )
+        return _extract_pin(result.stdout + result.stderr)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def codex_pinned_version(config_path: Optional[Path] = None) -> Optional[str]:
+    path = config_path or DEFAULT_CODEX_CONFIG_PATH
+    if not path.exists() or _toml_reader is None:
+        return None
+    try:
+        data = _toml_reader.loads(path.read_text())
+        args = data.get("mcp_servers", {}).get(SERVER_NAME, {}).get("args", [])
+        return _extract_pin(" ".join(str(a) for a in args))
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def antigravity_pinned_version(config_path: Optional[Path] = None) -> Optional[str]:
+    path = config_path or DEFAULT_ANTIGRAVITY_CONFIG_PATH
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text())
+        args = data.get("mcpServers", {}).get(SERVER_NAME, {}).get("args", [])
+        return _extract_pin(" ".join(str(a) for a in args))
+    except Exception:  # noqa: BLE001
+        return None
+
+
 TOOLS = {
     "claude": {
         "label": "Claude Code",
         "is_installed": lambda **kw: claude_is_installed(),
+        "pinned_version": lambda **kw: claude_pinned_version(),
         "install": lambda version=None, **kw: claude_install(version=version),
         "uninstall": lambda **kw: claude_uninstall(),
         "needs_path_override": False,
@@ -288,6 +340,7 @@ TOOLS = {
     "codex": {
         "label": "Codex CLI",
         "is_installed": lambda config_path=None, **kw: codex_is_installed(config_path),
+        "pinned_version": lambda config_path=None, **kw: codex_pinned_version(config_path),
         "install": lambda config_path=None, version=None, **kw: codex_install(config_path, version=version),
         "uninstall": lambda config_path=None, **kw: codex_uninstall(config_path),
         "needs_path_override": True,
@@ -296,6 +349,7 @@ TOOLS = {
     "antigravity": {
         "label": "Antigravity",
         "is_installed": lambda config_path=None, **kw: antigravity_is_installed(config_path),
+        "pinned_version": lambda config_path=None, **kw: antigravity_pinned_version(config_path),
         "install": lambda config_path=None, version=None, **kw: antigravity_install(config_path, version=version),
         "uninstall": lambda config_path=None, **kw: antigravity_uninstall(config_path),
         "needs_path_override": True,

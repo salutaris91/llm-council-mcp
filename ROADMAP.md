@@ -1,6 +1,6 @@
 # Roadmap
 
-## Next (0.1.9)
+## Next (0.1.10)
 - **Council-Modi als getrennte MCP-Tools (statt UI-Toggle):** Der Server exponiert mehrere Tools, der aufrufende Agent wählt situativ das passende — kein manuelles Umschalten. Drei Varianten, bewusst phasiert:
   - **Phase 1 (zuerst) — `ask_internal_council` (Light):** Läuft komplett auf dem Modell, bei dem der Nutzer gerade ist (Host-Abo, kein API-Key, keine Zusatzkosten). Ein einzelnes Modell nimmt nacheinander 5 verschiedene Sichtweisen ein. Das Tool führt nicht selbst aus, sondern liefert den strukturierten 5-Perspektiven-Prompt zurück, den der Host-Agent (Claude Code / Codex / Antigravity) auf seinem Abo ausführt. Einfachster, additivster Einstieg.
   - **Phase 2 — `ask_council` (bestehend):** Echtes Multi-Modell-Debating über parallele OpenRouter-Calls, keine Personas (= aktueller Karpathy-Modus, unverändert).
@@ -8,6 +8,9 @@
   - **Pro-Council an-/abschaltbar in den Einstellungen:** In der Setup-UI lässt sich jedes der drei Tools einzeln aktivieren/deaktivieren (z. B. nur internes Council für Nutzer ohne API-Key, oder Experten-Council ausblenden). Deaktivierte Tools werden vom Server gar nicht erst exponiert, damit der Host-Agent sie nicht anbietet. Da MCP-Hosts die Tool-Liste i. d. R. beim Serverstart lesen, wirkt das An-/Abschalten erst nach einem Host-/Server-Neustart — die UI muss das beim Umschalten klar kommunizieren („wird nach Neustart des Hosts aktiv", analog zum bestehenden Install-/Update-Flow).
   - **Kontextueller Diversitäts-Hinweis:** Je nach aktiviertem/gewähltem Modus erscheint ein nicht-blockierender Hinweis, wo die Aussagekraft eingeschränkt ist — z. B. beim internen Light-Council: „Achtung, die Diversität ist hier eingeschränkt, weil alle 5 Sichtweisen von *einem* Modell stammen (gemeinsame blinde Flecken). Für echte Modell-Diversität `ask_council` / `ask_expert_council` nutzen." Hinweis sowohl in der UI als auch in der Tool-Beschreibung/Ausgabe, damit der Modus nicht mit echtem Multi-Modell verwechselt wird.
   - Offene Entscheidung für Phase 3: Persona als leichter Hint vs. volle Charaktermaske (bestimmt, wie stark sich Phase 3 von Phase 2 abhebt).
+
+## Released in 0.1.9
+- **Install-Buttons & Host-Status zeigen jetzt die Version (statt nur „installiert").** Vorher hieß der Button immer „Installieren", obwohl es in Wahrheit das (Neu-)Schreiben des Versions-Pins ist — verwirrend, wenn ein Host schon eingetragen war. Jetzt: pro Host wird die **gepinnte Version** angezeigt (z. B. „✓ installiert (@0.1.7)"), und das Button-Label ist kontextabhängig — „Installieren" (nicht eingetragen), „Aktualisieren" (eingetragen, aber veraltet, farblich hervorgehoben) oder „Neu eintragen" (bereits auf Zielversion). Versions-Lesung via `installer.*_pinned_version()` (Regex auf die `@version`-Pins in den Host-Configs bzw. `claude mcp list`).
 
 ## Released in 0.1.8
 - **Update-Hinweis-Text korrigiert (war irreführend).** Der `update_body` in `setup_ui.py` sagte „danach die Seite neu laden und erneut auf 'Installieren' klicken" — das war falsch: Neuladen bewirkt nichts (der Hinweis hängt am *laufenden* Server, nicht an der Seite), und der entscheidende Schritt **Host-Neustart** fehlte ganz. Neuer Text (DE/EN) nennt jetzt die drei echten Schritte: 1) Befehl im Terminal ausführen (öffnet die aktualisierte UI, ggf. auf Fallback-Port), 2) pro Host auf „Installieren" klicken, 3) Host neu starten — und stellt klar, dass der Hinweis erst nach dem Host-Neustart verschwindet.
