@@ -354,8 +354,7 @@ wheels = [
 ]
 
 [[package]]
-name = "llm-council-mcp"
-version = "0.1.0"
+name = "llm-council-mcp-server"
 source = { virtual = "." }
 dependencies = [
     { name = "flask" },
