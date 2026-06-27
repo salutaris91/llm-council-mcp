@@ -1,6 +1,6 @@
 # Roadmap
 
-## Next (0.1.11)
+## Next (0.2)
 - **Council-Modi als getrennte MCP-Tools (statt UI-Toggle):** Der Server exponiert mehrere Tools, der aufrufende Agent wählt situativ das passende — kein manuelles Umschalten. Drei Varianten, bewusst phasiert:
   - **Phase 1 (zuerst) — `ask_internal_council` (Light):** Läuft komplett auf dem Modell, bei dem der Nutzer gerade ist (Host-Abo, kein API-Key, keine Zusatzkosten). Ein einzelnes Modell nimmt nacheinander 5 verschiedene Sichtweisen ein. Das Tool führt nicht selbst aus, sondern liefert den strukturierten 5-Perspektiven-Prompt zurück, den der Host-Agent (Claude Code / Codex / Antigravity) auf seinem Abo ausführt. Einfachster, additivster Einstieg.
   - **Phase 2 — `ask_council` (bestehend):** Echtes Multi-Modell-Debating über parallele OpenRouter-Calls, keine Personas (= aktueller Karpathy-Modus, unverändert).
