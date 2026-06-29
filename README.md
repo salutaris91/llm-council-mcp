@@ -69,13 +69,13 @@ python3 setup_ui.py
 
 Follow these steps to get up and running:
 
-1. **Get an OpenRouter API Key:**
-   - Create an API key at **[openrouter.ai/keys](https://openrouter.ai/keys)**.
-   - *Note:* Make sure your OpenRouter account has a small funded balance, as each query runs multiple models in parallel.
-2. **Launch the Setup UI:**
+1. **Launch the Setup UI:**
    - Run `uvx --from llm-council-mcp-server llm-council-setup` in your terminal. This will automatically open the local configuration panel in your web browser.
-3. **Configure Settings:**
-   - Paste your API key, select your preferred council and Chairman models, and click **Save**.
+2. **Configure Settings:**
+   - For `ask_internal_council` (Light Mode), no OpenRouter API key is required.
+   - For the full `ask_council` mode, create an API key at **[openrouter.ai/keys](https://openrouter.ai/keys)**, make sure the account has a small funded balance, paste the key, select your preferred council and Chairman models, and click **Save**.
+3. **Choose Exposed Tools:**
+   - Keep both tools enabled, or hide one of them if you only want your MCP host to offer the free internal council or the full OpenRouter council.
 4. **Register the Server:**
    - Under the **Install** section of the Setup UI, click the **Install** button next to your desired tool (Claude Code, Codex CLI, or Antigravity).
 5. **Restart Your Tool:**
@@ -91,6 +91,7 @@ The Setup UI provides a user-friendly interface to manage your council settings.
 - **Language Switcher:** Toggle the UI dynamically between German and English.
 - **Model Presets (Quick & Deep):** Instantly switch between fast models (for quick checks) and highly capable reasoning models (for deep architectural decisions).
 - **Advanced / Expert Settings:** Adjust the AI's "creativity" (temperatures) for each of the three stages and configure custom token limits.
+- **Tool Visibility Switches:** Expose or hide `ask_internal_council` and `ask_council` individually. Disabled tools are not offered to the MCP host after restart.
 - **Auto-Open Browser Toggle:** Choose whether the Setup UI should automatically open your browser on startup.
 - **Tool Installer:** View the status (Installed/Not Installed) and register/unregister the MCP server in Claude Code, Codex CLI, and Antigravity with a single click.
 
@@ -200,15 +201,15 @@ args = ["/path/to/llm-council-mcp/server.py"]
 This repository is set up with **Trusted Publishing** to PyPI via GitHub Actions. Releases are triggered tokenless using OIDC.
 
 To release a new version:
-1. Update the version string in `_version.py` (e.g. `0.1.4`). This is the single
+1. Update the version string in `_version.py` (e.g. `0.2.0`). This is the single
    source of truth — `pyproject.toml`, the installer pin, **and the version shown
    in the Setup UI header** all derive from it automatically, so there is no
    separate place to update the displayed version.
 2. Commit and push the changes to `main`.
 3. Create and push a version tag matching `v*.*.*`:
    ```bash
-   git tag -a v0.1.4 -m "v0.1.4"
-   git push origin v0.1.4
+   git tag -a v0.2.0 -m "v0.2.0"
+   git push origin v0.2.0
    ```
 4. GitHub Actions will automatically build the package and publish it to PyPI.
 5. Create a GitHub Release referencing the new tag.
@@ -288,13 +289,13 @@ python3 setup_ui.py
 
 Befolge diese Schritte, um direkt loszulegen:
 
-1. **OpenRouter API-Key holen:**
-   - Erstelle einen API-Key auf **[openrouter.ai/keys](https://openrouter.ai/keys)**.
-   - *Hinweis:* Stelle sicher, dass dein OpenRouter-Konto ein kleines Guthaben aufweist, da pro Anfrage mehrere Modell-Aufrufe parallel durchgeführt werden.
-2. **Setup-UI starten:**
+1. **Setup-UI starten:**
    - Führe `uvx --from llm-council-mcp-server llm-council-setup` im Terminal aus. Dadurch öffnet sich die lokale Konfigurationsoberfläche in deinem Browser.
-3. **Einstellungen konfigurieren:**
-   - Trage deinen API-Key ein, wähle deine bevorzugten Council- und Chairman-Modelle und klicke auf **Speichern**.
+2. **Einstellungen konfigurieren:**
+   - Für `ask_internal_council` (Light-Modus) brauchst du keinen OpenRouter-API-Key.
+   - Für den vollwertigen `ask_council`-Modus erstellst du einen API-Key auf **[openrouter.ai/keys](https://openrouter.ai/keys)**, stellst ein kleines Guthaben sicher, trägst den Key ein, wählst deine bevorzugten Council- und Chairman-Modelle und klickst auf **Speichern**.
+3. **Sichtbare Tools wählen:**
+   - Lass beide Tools aktiv oder blende eines aus, wenn dein MCP-Host nur das kostenlose interne Council oder nur das vollständige OpenRouter-Council anbieten soll.
 4. **Server registrieren:**
    - Klicke im Bereich **Install** der Setup-UI auf den Button **Install** neben dem Tool deiner Wahl (Claude Code, Codex CLI oder Antigravity).
 5. **Tool neu starten:**
@@ -310,6 +311,7 @@ Die Setup-UI bietet eine benutzerfreundliche Oberfläche zur Verwaltung deiner C
 - **Sprachumschalter:** Wechselt die UI dynamisch zwischen Deutsch und Englisch.
 - **Modell-Presets (Schnell & Deep):** Ermöglicht das sofortige Umschalten zwischen schnellen Modellen (für schnelle Checks) und hochentwickelten Reasoning-Modellen (für tiefgehende Architekturfragen).
 - **Profi-Modus / Erweiterte Einstellungen:** Passe die „Kreativität“ der KI (Temperaturen) für jede der drei Stufen individuell an und definiere maximale Token-Limits.
+- **Tool-Sichtbarkeit:** `ask_internal_council` und `ask_council` einzeln aktivieren oder ausblenden. Deaktivierte Tools werden dem MCP-Host nach Neustart nicht angeboten.
 - **Browser Auto-Open Toggle:** Wähle aus, ob die Setup-UI beim Start automatisch den Browser öffnen soll.
 - **Tool-Installer:** Zeigt den aktuellen Installationsstatus an und ermöglicht die Registrierung/Entfernung des MCP-Servers in Claude Code, Codex CLI und Antigravity mit einem Klick.
 
@@ -419,12 +421,12 @@ args = ["/pfad/zu/llm-council-mcp/server.py"]
 Dieses Repository verwendet **Trusted Publishing** über GitHub Actions, um Releases vollautomatisch auf PyPI zu veröffentlichen. Das Publishing erfolgt tokenlos mittels OIDC.
 
 Ablauf für ein neues Release:
-1. Versionsnummer in `_version.py` anpassen (z. B. `0.1.4`).
+1. Versionsnummer in `_version.py` anpassen (z. B. `0.2.0`).
 2. Änderungen committen und auf `main` pushen.
 3. Versions-Tag erstellen und pushen (muss auf `v*.*.*` passen):
    ```bash
-   git tag -a v0.1.4 -m "v0.1.4"
-   git push origin v0.1.4
+   git tag -a v0.2.0 -m "v0.2.0"
+   git push origin v0.2.0
    ```
 4. GitHub Actions baut und veröffentlicht das Paket automatisch auf PyPI.
 5. Ein GitHub-Release für den neuen Tag erstellen.
