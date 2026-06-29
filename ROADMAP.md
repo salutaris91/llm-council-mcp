@@ -1,8 +1,21 @@
 # Roadmap
 
 ## Next
-- **`ask_expert_council` (Voll/3a):** Multi-Modell wie `ask_council`, aber jedes Modell bekommt zusätzlich eine Persona (1 Persona pro Modell, als Tonfall-/Fokus-Hint, nicht als volle Maske). Datenmodell wird zu Modell↔Persona-Paaren (`council_members`, schema_version 2, abwärtskompatibel); Stage 1 baut pro Modell einen eigenen System-Prompt, Stage 2/3 bleiben unberührt.
-- **Offene Entscheidung für `ask_expert_council`:** Persona als leichter Hint vs. volle Charaktermaske (bestimmt, wie stark sich der Experten-Modus vom bestehenden Multi-Modell-Council abhebt).
+- **API-Key sicherer speichern:** Optionales `keyring`-Backend einführen, damit der OpenRouter-Key im OS-Schlüsselspeicher statt im Klartext-`settings.json` liegen kann. `settings.json` bleibt für nicht-sensitive Einstellungen zuständig; Migration und Fallback müssen klar dokumentiert sein.
+- **Kaputte Konfiguration sichtbar machen:** `load_settings()` darf JSON-/Lesefehler nicht still zu `{}` degradieren. Setup-UI und Logs sollen Datei, Ursache und nächsten Schritt anzeigen, damit Nutzer nicht wegen unsichtbarer Config-Probleme falsche Defaults oder fehlende Tools debuggen.
+- **Host-Update-/Restart-Zustand klarer anzeigen:** Nach Install/Update unterscheiden zwischen „Config-Pin geschrieben" und „Host läuft tatsächlich mit neuer Version". Für CLI-Hosts ggf. heuristisch arbeiten, aber die UI soll klar sagen, welcher Host noch einen Neustart braucht.
+- **Installer-Fehler besser erklären:** Besonders kaputtes JSON in `mcp_config.json` mit Datei, Zeile/Position und Reparaturhinweis melden.
+
+## Product Features After Stabilization
+- **Job/Poll-Modus für lange `ask_council`-Runs:** `ask_council` bzw. ein neues Start-Tool gibt sofort eine `job_id` zurück; `get_council_result(job_id)` pollt Ergebnis und Status. Das macht Fortschritt host-unabhängig sichtbar und entschärft Tool-Timeouts, sobald reale Läufe >2-3 Minuten problematisch werden.
+- **`ask_expert_council` (Voll/3a) als leichter Persona-Modus:** Multi-Modell wie `ask_council`, aber jedes Modell bekommt zusätzlich eine Persona als Tonfall-/Fokus-Hint, nicht als volle Charaktermaske. Datenmodell wird zu Modell↔Persona-Paaren (`council_members`, schema_version 2, abwärtskompatibel); Stage 1 baut pro Modell einen eigenen System-Prompt, Stage 2/3 bleiben unberührt.
+- **Testabdeckung für die riskanten Ränder ausbauen:** Settings-Migration, kaputte Config-Dateien, Tool-Sichtbarkeit, Host-Installer-Pfade und Update-/Restart-Anzeigen gezielt testen.
+
+## Deliberately Deferred
+- **Kein direkter Workspace-Zugriff im Server:** Der MCP-Host soll Dateien lesen und relevanten Kontext übergeben. Das hält den Server sicherer, einfacher und host-kompatibel.
+- **Keine frühe Websuche in Stage 1:** Erhöht Kosten, Latenz, Reproduzierbarkeitsprobleme und Sicherheitsfläche. Erst prüfen, wenn der Kernworkflow stabil bleibt und es einen klaren Nutzungsfall gibt.
+- **Kein großer Chat-/Diskussionsmodus vor Zuverlässigkeitsarbeit:** Erst lange Runs, Config-Fehler, Secret-Handling und Update-UX stabilisieren; danach kann ein interaktiver Modus sinnvoll bewertet werden.
+- **Light-Modus nicht als echte Modell-Diversität verkaufen:** Die klare Diversity-Warnung bleibt wichtig, weil alle Perspektiven vom Host-Modell simuliert werden.
 
 ## Released in 0.2.0
 - **Neues Tool `ask_internal_council` (Light-Modus).** Liefert sofort einen strukturierten 5-Perspektiven-Prompt an den Host-Agenten zurück. Läuft ohne OpenRouter-API-Key und ohne zusätzliche API-Kosten, weil Claude Code / Codex / Antigravity das interne Council mit dem jeweils aktuellen Host-Modell ausführt.
