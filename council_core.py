@@ -496,3 +496,60 @@ async def run_full_council(
         "council_models": council_models,
         "chairman_model": chairman_model,
     }
+
+
+INTERNAL_COUNCIL_PROMPT_TEMPLATE = """You are acting as an internal LLM Council. Analyze the user's question from multiple angles and synthesize a balanced final decision.
+
+Original Question:
+{question}
+
+{code_context_block}
+---
+
+Please execute the following 3 stages internally and present the entire process clearly to the user:
+
+### STAGE 1: 5 Perspective Analysis
+Analyze the question from these 5 distinct viewpoints:
+
+1. **Der Pragmatiker (Pragmatist / Simplicity):**
+   Focus on the simplest, most direct solution. Avoid over-engineering. What is the minimal viable way to achieve this?
+
+2. **Der Software-Architekt (Architect / Scalability):**
+   Focus on long-term maintainability, clean architecture, separation of concerns, scalability, and design patterns.
+
+3. **Der Skeptiker (Skeptic / Security & Performance):**
+   Actively search for security holes, edge cases, potential performance bottlenecks, error handling issues, and points of failure.
+
+4. **Der Clean-Code-Verfechter (Clean Code Advocate):**
+   Focus on language standards, naming conventions, formatting, testability, and adherence to best practices.
+
+5. **Der Produkt- & UX-Optimierer (Product & UX Thinker):**
+   Focus on how this decision impacts the developer experience (DX), end-user experience (UX), and utility.
+
+---
+
+### STAGE 2: Peer Review & Debate
+Briefly compare and debate the viewpoints. Address contradictions: Which arguments outweigh the others and why? (e.g., does the architect's scalability concern outweigh the pragmatist's simplicity here?)
+
+---
+
+### STAGE 3: Final Synthesis (Chairman's Recommendation)
+Synthesize the debate into a single, cohesive recommendation. Give clear, actionable instructions on the path forward.
+
+---
+**Diversitäts-Hinweis / Diversity Warning:**
+*Achtung: Dies ist ein internes Light-Council. Alle 5 Sichtweisen werden von mir (demselben Modell) generiert. Die Aussagekraft ist daher durch meine eigenen blinden Flecken eingeschränkt. Für echte Modell-Diversität über mehrere unterschiedliche Modelle bitte das Tool `ask_council` verwenden.*
+"""
+
+
+def generate_internal_council_prompt(question: str, code_context: Optional[str] = None) -> str:
+    """Generate the 5-perspective prompt template to be returned to the host agent."""
+    code_context_block = ""
+    if code_context:
+        code_context_block = f"Code Context:\n{code_context}\n"
+        
+    return INTERNAL_COUNCIL_PROMPT_TEMPLATE.format(
+        question=question,
+        code_context_block=code_context_block
+    )
+

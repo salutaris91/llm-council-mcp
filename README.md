@@ -101,13 +101,24 @@ Your configuration is saved to a `settings.json` file in your user config direct
 
 ## Usage
 
-To use the council, simply ask your MCP host to query it, passing any code context you want it to evaluate.
+The server exposes two MCP tools:
+
+1. **`ask_internal_council` (Light Mode):**
+   - **No API Key / No Cost:** Runs entirely locally on your host agent's current subscription.
+   - **How it works:** It instantly returns a structured prompt directing your host agent to simulate 5 distinct perspectives (Pragmatist, Architect, Skeptic, Clean Code Advocate, UX Thinker), debate them internally, and synthesize a final recommendation.
+   - **Note on Diversity:** Since all perspectives are simulated by the same single model, the diversity is limited (shared blind spots).
+
+2. **`ask_council` (Full Mode):**
+   - **Real Multi-Model Consensus:** Requires an OpenRouter API key and query costs.
+   - **How it works:** Queries multiple different real AI models in parallel, lets them anonymously review and rank each other, and uses a final Chairman model to synthesize the results. Takes about 30 to 120 seconds.
+
+Ask your MCP host to query the respective tool, passing any code context you want it to evaluate.
 
 **Example Prompts:**
-* *"Use the council to get a second opinion on whether we should use Redis or an in-memory cache for this class."*
+* *"Use the internal council to analyze whether we should use Redis or Memcached here."*
 * *"Ask the council to review my implementation of this sorting algorithm."*
 
-**What happens under the hood:**
+**What happens under the hood (for the full `ask_council` mode):**
 The server will run the 3-stage consensus pipeline. Because this involves multiple parallel and sequential LLM calls, the tool response typically takes **30 to 120 seconds** to complete. Some hosts (Antigravity) show live progress, others (Codex) only a spinner — the call continues normally and typically takes 30–120 s depending on the models (occasionally a bit longer). Simply wait until the result appears. It will return a formatted Markdown report consisting of the Chairman's synthesis, followed by the individual models' responses and rankings.
 
 ---
@@ -309,13 +320,24 @@ Deine Konfiguration wird in einer `settings.json`-Datei im Konfigurationsverzeic
 
 ## Nutzung
 
-Um den Council zu nutzen, bitte einfach deinen MCP-Client darum, das Tool `ask_council` aufzurufen und übergib die Frage sowie den zu prüfenden Code.
+Der Server stellt zwei MCP-Tools bereit:
+
+1. **`ask_internal_council` (Light-Modus):**
+   - **Kein API-Key / Kostenlos:** Läuft vollständig lokal über das aktuelle Abo deines Host-Agenten.
+   - **Funktionsweise:** Liefert sofort einen strukturierten Prompt zurück, der deinen Host-Agenten anweist, 5 verschiedene Sichtweisen (Pragmatiker, Architekt, Skeptiker, Clean-Code-Verfechter, UX-Optimierer) einzunehmen, diese intern zu debattieren und eine finale Synthese zu schreiben.
+   - **Diversitäts-Hinweis:** Da alle Sichtweisen von ein und demselben Modell simuliert werden, ist die gedankliche Diversität durch die blinden Flecken des Modells eingeschränkt.
+
+2. **`ask_council` (Vollwertiger Modus):**
+   - **Echter Multi-Modell-Konsens:** Benötigt einen OpenRouter-API-Key und verursacht API-Kosten.
+   - **Funktionsweise:** Fragt parallel mehrere echte Modelle an, lässt sie sich gegenseitig anonym bewerten und nutzt ein Chairman-Modell zur Synthese. Ein Durchlauf dauert ca. 30 bis 120 Sekunden.
+
+Bitte deinen MCP-Client einfach darum, das gewünschte Tool aufzurufen und übergib die Frage sowie den zu prüfenden Code.
 
 **Beispiel-Prompts:**
-* *"Nutze den Council für eine zweite Meinung dazu, ob wir für diese Klasse Redis oder einen In-Memory-Cache nehmen sollten."*
-* *"Frag den Council nach einem Review für meine Implementierung dieses Sortieralgorithmus."*
+* *"Nutze das interne Council, um eine zweite Meinung dazu zu bekommen, ob wir hier Redis oder Memcached nehmen sollten."*
+* *"Frag das echte Council nach einem Review für meine Implementierung dieses Sortieralgorithmus."*
 
-**Was im Hintergrund passiert:**
+**Was im Hintergrund passiert (beim vollwertigen `ask_council`-Modus):**
 Der Server führt die 3 Stufen des Council-Prozesses durch. Da dies mehrere parallele und sequenzielle LLM-Aufrufe erfordert, dauert die Antwort in der Regel **30 bis 120 Sekunden**. Manche Hosts (Antigravity) zeigen Live-Fortschritt, andere (Codex) nur einen Spinner — der Call läuft dabei ganz normal weiter und dauert je nach Modellen typischerweise 30–120 s (gelegentlich etwas länger). Einfach warten, bis das Ergebnis erscheint. Du erhältst einen formatierten Markdown-Report mit der Synthese des Chairmans, gefolgt von den Antworten der Einzelmodelle sowie deren Rankings.
 
 ---

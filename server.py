@@ -18,9 +18,10 @@ Usage (manual smoke test):
 
 import logging
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Annotated
 
 from mcp.server.fastmcp import FastMCP, Context
+from mcp.types import ToolAnnotations
 from pydantic import BaseModel, ConfigDict, Field
 
 import council_core
@@ -34,60 +35,89 @@ mcp = FastMCP("llm_council_mcp")
 mcp._mcp_server.version = __version__
 
 
-class AskCouncilInput(BaseModel):
-    """Input for ask_council."""
+async def ask_internal_council(
+    question: Annotated[
+        str,
+        Field(
+            description="The question or decision you want the internal council to analyze.",
+            min_length=1,
+            max_length=20000,
+        ),
+    ],
+    code_context: Annotated[
+        Optional[str],
+        Field(
+            default=None,
+            description="Relevant code, files or error messages for context.",
+            max_length=100000,
+        ),
+    ] = None,
+    ctx: Context = None,
+) -> str:
+    """Get a multi-perspective single-model 'second opinion' on a decision without API keys.
 
-    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
-
-    question: str = Field(
-        ...,
-        description=(
-            "The question or decision you want multiple LLMs to weigh in on, "
-            "e.g. 'Should we use approach A or B for the caching layer, given "
-            "the code below?'. Be specific - the council only sees what's in "
-            "this field plus code_context, nothing else about your project."
-        ),
-        min_length=1,
-        max_length=20000,
-    )
-    code_context: Optional[str] = Field(
-        default=None,
-        description=(
-            "Relevant code, file excerpts, error messages, or other context "
-            "the council should consider. Paste actual content here - the "
-            "council has no filesystem access of its own; you (the calling "
-            "agent) already have the files open, so include what's relevant."
-        ),
-        max_length=100000,
-    )
-    models: Optional[List[str]] = Field(
-        default=None,
-        description=(
-            "Optional override list of OpenRouter model IDs to use as council "
-            "members, e.g. ['openai/gpt-5.1', 'anthropic/claude-sonnet-4.5', "
-            "'x-ai/grok-4']. If omitted, uses the configured default models."
-        ),
-    )
-    chairman: Optional[str] = Field(
-        default=None,
-        description=(
-            "Optional override for the chairman model that synthesizes the "
-            "final answer. If omitted, uses the configured default chairman model."
-        ),
-    )
+    Generates a structured prompt instructing you (the calling LLM) to simulate
+    5 different viewpoints (Pragmatist, Architect, Skeptic, Clean Code Advocate, UX Thinker),
+    debate them internally, and synthesize a final balanced decision.
+    """
+    logger.info("Starting internal council query.")
+    if ctx:
+        await ctx.info("Generating internal council prompt...")
+    
+    prompt = council_core.generate_internal_council_prompt(question, code_context)
+    return prompt
 
 
-@mcp.tool(
-    name="ask_council",
-    annotations={
-        "title": "Ask the LLM Council",
-        "readOnlyHint": True,
-        "destructiveHint": False,
-        "idempotentHint": False,
-        "openWorldHint": True,
-    },
-)
-async def ask_council(params: AskCouncilInput, ctx: Context) -> str:
+async def ask_council(
+    question: Annotated[
+        str,
+        Field(
+            description=(
+                "The question or decision you want multiple LLMs to weigh in on, "
+                "e.g. 'Should we use approach A or B for the caching layer, given "
+                "the code below?'. Be specific - the council only sees what's in "
+                "this field plus code_context, nothing else about your project."
+            ),
+            min_length=1,
+            max_length=20000,
+        ),
+    ],
+    code_context: Annotated[
+        Optional[str],
+        Field(
+            default=None,
+            description=(
+                "Relevant code, file excerpts, error messages, or other context "
+                "the council should consider. Paste actual content here - the "
+                "council has no filesystem access of its own; you (the calling "
+                "agent) already have the files open, so include what's relevant."
+            ),
+            max_length=100000,
+        ),
+    ] = None,
+    models: Annotated[
+        Optional[List[str]],
+        Field(
+            default=None,
+            description=(
+                "Optional override list of OpenRouter model IDs to use as council "
+                "members, e.g. ['openai/gpt-5.1', 'anthropic/claude-sonnet-4.5', "
+                "'x-ai/grok-4']. If omitted, uses the configured default models."
+            ),
+        ),
+    ] = None,
+    chairman: Annotated[
+        Optional[str],
+        Field(
+            default=None,
+            description=(
+                "Optional override for the chairman model that synthesizes the "
+                "final answer. If omitted, uses the configured default chairman model."
+            ),
+        ),
+    ] = None,
+    ctx: Context = None,
+) -> str:
     """Get a multi-model "second opinion" on an important decision.
 
     Runs the full 3-stage council process locally and synchronously:
@@ -117,22 +147,23 @@ async def ask_council(params: AskCouncilInput, ctx: Context) -> str:
     Based on Andrej Karpathy's "LLM Council" idea (github.com/karpathy/llm-council).
     MCP server by Alexander Deja (anderzlabs.de).
     """
-    logger.info("Starting council query. Models override: %s", params.models)
+    logger.info("Starting council query. Models override: %s", models)
 
     async def _progress(progress: float, total: float, msg: str):
-        await ctx.info(msg)
-        if hasattr(ctx, "report_progress"):
-            try:
-                await ctx.report_progress(progress, total)
-            except Exception:
-                pass
+        if ctx:
+            await ctx.info(msg)
+            if hasattr(ctx, "report_progress"):
+                try:
+                    await ctx.report_progress(progress, total)
+                except Exception:
+                    pass
 
     try:
         result = await council_core.run_full_council(
-            user_query=params.question,
-            code_context=params.code_context,
-            models=params.models,
-            chairman=params.chairman,
+            user_query=question,
+            code_context=code_context,
+            models=models,
+            chairman=chairman,
             progress_callback=_progress,
         )
     except council_core.CouncilError as e:
@@ -181,6 +212,40 @@ async def ask_council(params: AskCouncilInput, ctx: Context) -> str:
             lines.append("")
 
     return "\n".join(lines)
+
+
+def register_configured_tools(mcp_instance: FastMCP, settings: dict) -> None:
+    """Dynamically register tools based on configurations and include strict annotations."""
+    if settings.get("expose_internal_council", True):
+        mcp_instance.add_tool(
+            ask_internal_council,
+            name="ask_internal_council",
+            description=(
+                "Get a multi-perspective single-model 'second opinion' on a decision "
+                "without OpenRouter API keys. Runs instantly locally by returning a structured prompt."
+            ),
+            annotations=ToolAnnotations(
+                title="Ask Internal Council (Light)",
+                readOnlyHint=True,
+                destructiveHint=False,
+                idempotentHint=False,
+                openWorldHint=True,
+            ),
+        )
+
+    if settings.get("expose_council", True):
+        mcp_instance.add_tool(
+            ask_council,
+            name="ask_council",
+            description="Get a multi-model 'second opinion' on an important decision using OpenRouter.",
+            annotations=ToolAnnotations(
+                title="Ask the LLM Council",
+                readOnlyHint=True,
+                destructiveHint=False,
+                idempotentHint=False,
+                openWorldHint=True,
+            ),
+        )
 
 
 def _maybe_start_setup_ui() -> None:
@@ -248,7 +313,13 @@ def main():
         
     sys.argv = [sys.argv[0]] + remaining
     _maybe_start_setup_ui()
+    
+    settings = council_settings.load_settings()
+    register_configured_tools(mcp, settings)
+    
     mcp.run()
+
 
 if __name__ == "__main__":
     main()
+
