@@ -3,7 +3,7 @@
 ## Next
 - **API-Key sicherer speichern:** Optionales `keyring`-Backend einführen, damit der OpenRouter-Key im OS-Schlüsselspeicher statt im Klartext-`settings.json` liegen kann. `settings.json` bleibt für nicht-sensitive Einstellungen zuständig; Migration und Fallback müssen klar dokumentiert sein.
 - **Kaputte Konfiguration sichtbar machen:** `load_settings()` darf JSON-/Lesefehler nicht still zu `{}` degradieren. Setup-UI und Logs sollen Datei, Ursache und nächsten Schritt anzeigen, damit Nutzer nicht wegen unsichtbarer Config-Probleme falsche Defaults oder fehlende Tools debuggen.
-- **Host-Update-/Restart-Zustand klarer anzeigen:** Nach Install/Update unterscheiden zwischen „Config-Pin geschrieben" und „Host läuft tatsächlich mit neuer Version". Für CLI-Hosts ggf. heuristisch arbeiten, aber die UI soll klar sagen, welcher Host noch einen Neustart braucht.
+- **Host-Update-/Restart-Zustand klarer anzeigen:** Nach Install/Update unterscheiden zwischen „Config-Pin geschrieben" und „Host läuft tatsächlich mit neuer Version". Für CLI-Hosts ggf. heuristisch arbeiten, aber die UI soll klar sagen, welcher Host noch einen Neustart braucht. Knackpunkt: die *laufende* Version ist nur für den server-eingebetteten Prozess (Port-Ping/PID) zuverlässig ermittelbar, für CLI-Hosts (Codex/Claude) kaum — ggf. heuristisch über „seit Config-Änderung noch kein Neustart erkannt" lösen.
 - **Installer-Fehler besser erklären:** Besonders kaputtes JSON in `mcp_config.json` mit Datei, Zeile/Position und Reparaturhinweis melden.
 - **Council-Timeouts & Performance** — ausgelöst durch einen Codex-Abbruch (`timed out awaiting tools/call after ~300s`) bei einem großen `ask_council`-Lauf. Reihenfolge bewusst „erst messen, dann tunen":
   - **Instrumentierung zuerst (vorgelagert).** Pro Modell/Stage Dauer + Token-Usage (`prompt_tokens`/`completion_tokens`) erfassen und loggen. Aktuell wird das `usage`-Objekt von OpenRouter in `_query_model` verworfen und es gibt kein Timing-Log — wir können daher gar nicht sagen, ob ein langsames Modell, die Antwortlänge oder der Kontext der Treiber war. Ohne diese Messung ist jedes Timeout-/Token-Tuning blind.
@@ -21,8 +21,9 @@
 ## Deliberately Deferred
 - **Kein direkter Workspace-Zugriff im Server:** Der MCP-Host soll Dateien lesen und relevanten Kontext übergeben. Das hält den Server sicherer, einfacher und host-kompatibel.
 - **Keine frühe Websuche in Stage 1:** Erhöht Kosten, Latenz, Reproduzierbarkeitsprobleme und Sicherheitsfläche. Erst prüfen, wenn der Kernworkflow stabil bleibt und es einen klaren Nutzungsfall gibt.
-- **Kein großer Chat-/Diskussionsmodus vor Zuverlässigkeitsarbeit:** Erst lange Runs, Config-Fehler, Secret-Handling und Update-UX stabilisieren; danach kann ein interaktiver Modus sinnvoll bewertet werden.
+- **Kein großer Chat-/Diskussionsmodus vor Zuverlässigkeitsarbeit:** Erst lange Runs, Config-Fehler, Secret-Handling und Update-UX stabilisieren; danach kann ein interaktiver Modus sinnvoll bewertet werden. Konkrete Vision wäre ein iterativer Dialog zwischen anfragendem Client und Chairman, um gemeinsam abzustimmen, welche Dateien für die Entscheidung im Kontext nötig sind.
 - **Light-Modus nicht als echte Modell-Diversität verkaufen:** Die klare Diversity-Warnung bleibt wichtig, weil alle Perspektiven vom Host-Modell simuliert werden.
+- **Kein TOON-Encoding:** Die Token-Effizienz-Optimierung aus dem Original-Projekt wird bewusst weggelassen, um den Code einfach und wartbar zu halten.
 
 ## Released in 0.2.0
 - **Neues Tool `ask_internal_council` (Light-Modus).** Liefert sofort einen strukturierten 5-Perspektiven-Prompt an den Host-Agenten zurück. Läuft ohne OpenRouter-API-Key und ohne zusätzliche API-Kosten, weil Claude Code / Codex / Antigravity das interne Council mit dem jeweils aktuellen Host-Modell ausführt.
@@ -74,19 +75,10 @@
 - serverInfo.version meldet App-Version (0.1.1) statt MCP-Library-Version.
 - DEV_MODE = False standardmäßig im Release-Paket gesetzt.
 
-## Soon
-- **Per-Host „Neustart ausstehend"-Anzeige.** Aktuell vergleicht der Stale-Host-Banner / „Aktualisieren"-Button nur den *Config-Pin* mit der Zielversion. Beim Klick auf „Aktualisieren" wird der Pin sofort geschrieben, also verschwindet die Markierung — obwohl der Host-Prozess noch die alte Version fährt, bis er neu gestartet wird. Gewünscht: zwischen „Config aktualisiert" und „Host läuft tatsächlich schon auf neuer Version" unterscheiden und z. B. „Neustart ausstehend: Codex, Claude Code" anzeigen. Knackpunkt: die *laufende* Version ist nur für den server-eingebetteten Prozess (Port-Ping/PID) ermittelbar, für CLI-Hosts (Codex/Claude) kaum — ggf. heuristisch über „seit Config-Änderung noch kein Neustart erkannt" lösen.
-- `keyring`-Backend (API-Key im OS-Schlüsselspeicher statt Klartext-settings.json) als optionale Wahl.
-- Freundlichere Installer-Fehlermeldung bei kaputtem JSON in mcp_config.json (Zeile/Datei nennen).
-- Optional dünnes PyPI-Alias-Paket `llm-council-setup`, damit das bequeme bare `uvx llm-council-setup` funktioniert.
-
 ## Later / Maybe
-- **Job/Poll-Modus für lange Calls:** `ask_council` gibt sofort eine job_id zurück, `get_council_result(job_id)` pollt. Macht Fortschritt auf JEDEM Host sichtbar und entschärft Tool-Call-Timeouts. Wird relevant, sobald Läufe real an Host-Timeouts scheitern (Laufzeiten > ~2–3 Min beobachtet).
 - Windows-Support (aktuell Mac-zentriert).
 - Weitere Hosts (z. B. Cursor).
-- Aus dem Original bewusst ausgelassen: TOON-Encoding.
-- Optionale Web-Suche in Stufe 1 (optionaler Aufruf externer Quellen).
 - Bearbeitbare Prompt-Vorlagen in der UI / Konfiguration für maximale Anpassbarkeit.
 - Alternative Modi für das Council (z. B. ein Modell als dedizierter "Kritiker" oder Advocatus Diaboli).
-- Diskussions-Modus / Chat-Verlauf (z. B. iterativer Dialog zwischen dem anfragenden Client und dem Chairman, um gemeinschaftlich abzustimmen, welche Dateien für die Entscheidung im Kontext benötigt werden).
+- Optional dünnes PyPI-Alias-Paket `llm-council-setup`, damit das bequeme bare `uvx llm-council-setup` funktioniert.
 - `open_ui_on_start`-Default für sehr breite Distribution überdenken (aktuell True).
